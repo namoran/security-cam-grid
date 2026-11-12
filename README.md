@@ -4,11 +4,12 @@ A retro CCTV / surveillance terminal interface displaying a dynamic 4-camera gri
 
 ## Features
 
-- **Live Streams**: Supports HLS (`.m3u8`) and YouTube live camera streams.
-- **Categorized Feeds**: Filter by region (North America, Europe, Asia, Africa, South America, Oceania) and category (Traffic, Beach, Resort, City, Nature).
-- **Retro CRT Aesthetic**: CRT scanline effects, phosphor-green HUD, and tracking animations.
-- **Dynamic Shuffling**: Randomize individual slots or shuffle all active camera feeds.
-- **Controls & Shortcuts**: Quick hotkeys (e.g. `Space` or `R` to shuffle) and full-screen view.
+- **6,100+ Live Streams**: High-reliability public traffic cameras, city surveillance, coastal/beach feeds, mountain passes, and wildlife preserves with 100% open CORS and HTTPS support.
+- **Interactive Tactical Radar Map**: Browse all 6,100+ cameras across the globe on an interactive dark surveillance map (`M` key or `MAP VIEW` button) with smooth clustering, keyword search, and one-click camera tuning for slots 1–4.
+- **Categorized Feeds & Filters**: Filter by camera type (Traffic, Urban, Beach, Mountain, Nature), continent, country, and state.
+- **Retro CRT Aesthetic**: CRT scanline effects, phosphor-green HUD, tracking animations, and tactile controls.
+- **Dynamic Shuffling**: Randomize individual camera slots or shuffle all active feeds with `Space` or `R`.
+- **Audio & Fullscreen Support**: Select any camera tile to unmute its audio stream or toggle full-screen view.
 
 ## Live Demo
 
@@ -21,3 +22,9 @@ Simply open `index.html` in any modern web browser or serve it via a local stati
 ```bash
 python3 -m http.server 8000
 ```
+
+### Hotkeys
+
+- `Space` / `R`: Shuffle all 4 cameras
+- `M`: Toggle Tactical Radar Map View
+- `Esc`: Close Map View
