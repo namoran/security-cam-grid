@@ -377,6 +377,39 @@
     box-shadow: 0 0 35px rgba(255, 0, 0, 0.6);
   }
 
+  
+  /* God's Eye Planetary Surveillance Engine */
+  .gods-eye-pill {
+    background: rgba(0, 25, 35, 0.9);
+    border: 1px solid #00e5ff;
+    color: #00e5ff;
+    padding: 3px 8px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+    font-weight: bold;
+  }
+  .gods-eye-icon {
+    font-size: 12px;
+    animation: pulseEye 2s infinite ease-in-out;
+  }
+  @keyframes pulseEye {
+    0%, 100% { opacity: 0.6; transform: scale(1); filter: drop-shadow(0 0 2px #00e5ff); }
+    50% { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 8px #00e5ff); }
+  }
+  .radar-new-pulse {
+    animation: radarBlipPulse 1.5s infinite alternate;
+  }
+  @keyframes radarBlipPulse {
+    from { stroke-width: 2px; stroke-opacity: 0.8; }
+    to { stroke-width: 6px; stroke-opacity: 0.2; }
+  }
+
+
   /* Tactical Radar Map & Leaflet HUD */
   .map-modal {
     position: fixed; inset: 0; z-index: 1000; background: rgba(5, 7, 5, 0.97);
@@ -517,7 +550,7 @@
   <div class="banner-left">
     <span class="classification-stamp">TOP SECRET // NOFORN</span>
     <span class="defcon-pill d2" id="defconBadge" onclick="cycleDefcon()" title="Click to cycle DEFCON level">DEFCON 2 // ARMED</span>
-    <span style="color:#7a8a7a">SIGINT PROJECT WATCHTOWER</span>
+    <span id="godsEyeBadge" class="gods-eye-pill" title="God's Eye: Continuous planetary stream reconnaissance active"><span class="gods-eye-icon">👁️</span> GOD'S EYE: ACTIVE <small id="godsEyeDiscoveredBadge" style="color:var(--accent);font-size:9px">(+0 LIVE)</small></span>
   </div>
   <div class="telemetry-ticker">
     <span>SAT UPLINK: <span class="sat-lock" id="satName">KH-11 (USA-224)</span></span>
@@ -613,7 +646,7 @@
   <div class="map-header">
     <div class="map-title">
       <span class="radar-blip">●</span> TACTICAL RADAR // GLOBAL SURVEILLANCE GRID
-      <small id="mapCamCount">7,560 CAMERAS ONLINE</small>
+      <small id="mapCamCount">7,560 CAMERAS ONLINE</small><span id="godsEyeMapTag" style="color:#00e5ff;font-size:11px;letter-spacing:1px;margin-left:10px;font-weight:bold"><span class="gods-eye-icon">👁️</span> GOD'S EYE: SCANNING // <span id="godsEyeOnlineSpan">7,560 LIVE</span></span>
       <span id="radarCoords" style="color:var(--theme-color);font-size:11px;letter-spacing:1.5px;margin-left:14px;font-weight:normal">TARGET: 38.5000°N / 95.0000°W</span>
       <span id="radarAzimuthDisplay" style="color:var(--accent);font-size:11px;letter-spacing:1px;margin-left:12px;font-weight:bold">AZIMUTH: 000° // 10 RPM</span>
     </div>
@@ -8548,9 +8581,14 @@ let autoFails = [0, 0, 0, 0];
 let skipped = 0;
 
 function markDead(feed) {
-  if (feed.kind === "yt" && !deadSet.has(key(feed))) {
+  if (!deadSet.has(key(feed))) {
     deadSet.add(key(feed));
     skipped++;
+    feed.online = false;
+    godsEyeOfflineCount++;
+    removeFeedMarkerFromMap(feed);
+    updateOnlineCounters();
+    logWiretap(`[SIGNAL LOST] ${feed.loc} DECOMMISSIONED FROM RADAR GRID`);
     try { localStorage.setItem("secgrid_dead", JSON.stringify([...deadSet])); } catch (e) {}
     drawStatline();
   }
@@ -8959,6 +8997,239 @@ setInterval(() => {
   if (azEl) azEl.textContent = `AZIMUTH: ${String(radarAzimuthAngle).padStart(3, '0')}° // 10 RPM`;
 }, 100);
 
+
+// ==================== GOD'S EYE PLANETARY SURVEILLANCE ENGINE ====================
+// Continually scans the earth in the background to gain complete global coverage.
+// When streams go down or go live, they dynamically appear or disappear on the radar map in real-time.
+
+let godsEyeActive = true;
+let godsEyeSectorIdx = 0;
+let godsEyeInterval = null;
+let godsEyeHealthInterval = null;
+let godsEyeDiscoveredCount = 0;
+let godsEyeOfflineCount = 0;
+let godsEyeScannedCount = 0;
+
+const GODS_EYE_SECTORS = [
+  "SECTOR 01: NORTH AMERICA // ALASKA & INTERSTATE",
+  "SECTOR 02: LATIN AMERICA // ANDES & AMAZON",
+  "SECTOR 03: EUROPE // BALTIC & MEDITERRANEAN STRAITS",
+  "SECTOR 04: MIDDLE EAST & AFRICA // SUEZ & CAPE",
+  "SECTOR 05: ASIA-PACIFIC // SILK ROAD & STRAITS",
+  "SECTOR 06: POLAR OCEANS // ANTARCTIC ICE SHEET"
+];
+
+// Rich backlog of global reconnaissance candidate streams across under-covered sectors
+const GODS_EYE_CANDIDATES = [
+  // Sector 1: North America & Caribbean
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "SUEZ CANAL MEDITERRANEAN APPROACH, PORT SAID", tag: "CANAL CAM", ty: "PORT", ct: "Africa", co: "Egypt", st: "Port Said", lat: 31.2653, lon: 32.3019 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "STRAIT OF GIBRALTAR EUROPA POINT, GIBRALTAR", tag: "STRAIT CAM", ty: "PORT", ct: "Europe", co: "United Kingdom", st: "Gibraltar", lat: 36.1097, lon: -5.3467 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "PANAMA CANAL PEDRO MIGUEL LOCKS", tag: "CANAL CAM", ty: "PORT", ct: "North America", co: "Panama", st: "Panama Canal", lat: 9.0167, lon: -79.6120 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "BERING STRAIT DIOMEDE ISLANDS WATCH", tag: "POLAR CAM", ty: "PORT", ct: "North America", co: "United States", st: "Alaska", lat: 65.7500, lon: -168.9500 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "CAPE HORN DRAKE PASSAGE LOOKOUT, CHILE", tag: "COASTAL CAM", ty: "PORT", ct: "South America", co: "Chile", st: "Magallanes", lat: -55.9800, lon: -67.2700 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "STRAIT OF MALACCA PORT KLANG, MALAYSIA", tag: "PORT CAM", ty: "PORT", ct: "Asia", co: "Malaysia", st: "Selangor", lat: 2.9998, lon: 101.3928 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "BOSPHORUS STRAIT RUMELI HISARI, ISTANBUL", tag: "STRAIT CAM", ty: "PORT", ct: "Asia", co: "Turkey", st: "Istanbul", lat: 41.0847, lon: 29.0572 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "ENGLISH CHANNEL DOVER-CALAIS WATCH", tag: "COASTAL CAM", ty: "PORT", ct: "Europe", co: "United Kingdom", st: "Dover", lat: 51.1275, lon: 1.3134 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "TOKYO HANEDA AIRPORT RUNWAY 05/23", tag: "AIRPORT CAM", ty: "PORT", ct: "Asia", co: "Japan", st: "Tokyo", lat: 35.5494, lon: 139.7798 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "SINGAPORE CHANGI AIRPORT SKYLINE", tag: "AIRPORT CAM", ty: "URBAN", ct: "Asia", co: "Singapore", st: "Changi", lat: 1.3644, lon: 103.9915 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "DUBAI INT'L AIRPORT CONCOURSE D", tag: "AIRPORT CAM", ty: "URBAN", ct: "Asia", co: "United Arab Emirates", st: "Dubai", lat: 25.2532, lon: 55.3657 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "LOS ANGELES LAX RUNWAY 25L TOWER", tag: "AIRPORT CAM", ty: "URBAN", ct: "North America", co: "United States", st: "California", lat: 33.9416, lon: -118.4085 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "SVALBARD NY-ALESUND ARCTIC RESEARCH BASE", tag: "ARCTIC CAM", ty: "NATURE", ct: "Europe", co: "Norway", st: "Svalbard", lat: 78.9236, lon: 11.9297 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "GREENLAND ILULISSAT ICEFJORD WATCH", tag: "POLAR CAM", ty: "NATURE", ct: "North America", co: "Greenland", st: "Ilulissat", lat: 69.2167, lon: -51.1000 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "MOUNT EVEREST SOUTH COL BASE CAMP", tag: "MOUNTAIN CAM", ty: "MOUNTAIN", ct: "Asia", co: "Nepal", st: "Sagarmatha", lat: 28.0026, lon: 86.8528 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "MAUNA KEA OBSERVATORY SUMMIT, HAWAII", tag: "TELESCOPE CAM", ty: "MOUNTAIN", ct: "North America", co: "United States", st: "Hawaii", lat: 19.8207, lon: -155.4681 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "ATACAMA ALMA ARRAY PLATEAU, CHILE", tag: "TELESCOPE CAM", ty: "MOUNTAIN", ct: "South America", co: "Chile", st: "Antofagasta", lat: -23.0292, lon: -67.7550 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "SAN YSIDRO BORDER CROSSING TIJUANA", tag: "BORDER CAM", ty: "TRAFFIC", ct: "North America", co: "United States", st: "California", lat: 32.5430, lon: -117.0290 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "BRENNER PASS ALPS BORDER HIGHWAY", tag: "BORDER CAM", ty: "MOUNTAIN", ct: "Europe", co: "Austria", st: "Tyrol", lat: 47.0067, lon: 11.5056 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "HONG KONG-ZHUHAI-MACAU MEGA BRIDGE", tag: "BRIDGE CAM", ty: "PORT", ct: "Asia", co: "China", st: "Guangdong", lat: 22.2833, lon: 113.7833 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "ORESUND BRIDGE COPENHAGEN-MALMO", tag: "BRIDGE CAM", ty: "PORT", ct: "Europe", co: "Denmark", st: "Oresund", lat: 55.5760, lon: 12.8210 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "GOLDEN GATE STRAIT PACIFIC LOOKOUT", tag: "PORT CAM", ty: "PORT", ct: "North America", co: "United States", st: "California", lat: 37.8250, lon: -122.4850 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "CAPE OF GOOD HOPE LIGHTHOUSE, SOUTH AFRICA", tag: "COASTAL CAM", ty: "PORT", ct: "Africa", co: "South Africa", st: "Western Cape", lat: -34.3570, lon: 18.4970 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "GALAPAGOS SANTA CRUZ COASTAL REEF", tag: "WILDLIFE CAM", ty: "BEACH", ct: "South America", co: "Ecuador", st: "Galapagos", lat: -0.7400, lon: -90.3100 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "EASTER ISLAND ANAKENA BEACH MOAI", tag: "HISTORIC CAM", ty: "BEACH", ct: "South America", co: "Chile", st: "Easter Island", lat: -27.0736, lon: -109.3236 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "KIBERA CORRIDOR NAIROBI, KENYA", tag: "URBAN CAM", ty: "URBAN", ct: "Africa", "co": "Kenya", st: "Nairobi", lat: -1.3133, lon: 36.7847 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "CASABLANCA MEDITERRANEAN HARBOUR, MOROCCO", tag: "PORT CAM", ty: "PORT", ct: "Africa", co: "Morocco", st: "Casablanca", lat: 33.6000, lon: -7.6167 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "RIO DE JANEIRO CORCOVADO PEAK, BRAZIL", tag: "MOUNTAIN CAM", ty: "URBAN", ct: "South America", co: "Brazil", st: "Rio de Janeiro", lat: -22.9519, lon: -43.2105 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "BUENOS AIRES RETIRO TRANSIT STATION, ARGENTINA", tag: "TRAFFIC CAM", ty: "URBAN", ct: "South America", co: "Argentina", st: "Buenos Aires", lat: -34.5919, lon: -58.3756 },
+  { kind: "yt", yt: "JQ_jwk_7OVE", loc: "SEOUL HANGANG PARK BANPO BRIDGE, KOREA", tag: "BRIDGE CAM", ty: "URBAN", ct: "Asia", co: "South Korea", st: "Seoul", lat: 37.5097, lon: 126.9961 }
+];
+
+let godsEyeCandidateIdx = 0;
+
+// Updates all UI camera counters dynamically
+function updateOnlineCounters() {
+  const onlineCount = POOL.filter(p => p.online !== false).length;
+  
+  const mapCamCountEl = document.getElementById("mapCamCount");
+  if (mapCamCountEl) mapCamCountEl.textContent = `${onlineCount.toLocaleString()} CAMERAS ONLINE`;
+  
+  const godsEyeOnlineEl = document.getElementById("godsEyeOnlineSpan");
+  if (godsEyeOnlineEl) godsEyeOnlineEl.textContent = `${onlineCount.toLocaleString()} LIVE`;
+  
+  const discBadge = document.getElementById("godsEyeDiscoveredBadge");
+  if (discBadge) discBadge.textContent = `(+${godsEyeDiscoveredCount} LIVE)`;
+
+  const statlineCount = document.getElementById("statline");
+  if (statlineCount) drawStatline();
+}
+
+// Dynamically adds a stream marker onto the Leaflet radar map
+function addFeedMarkerToMap(f, i, isNew = false) {
+  if (!mapInstance || !mapMarkersCluster || f.lat == null || f.lon == null) return;
+  if (f._marker) return; // already rendered
+  
+  const col = f.ty === 'TRAFFIC' ? '#33ff66' : (f.ty === 'URBAN' ? '#33ddff' : (f.ty === 'BEACH' ? '#00e5ff' : '#ffb000'));
+  const marker = L.circleMarker([f.lat, f.lon], {
+    radius: isNew ? 8 : 5,
+    color: isNew ? '#ffffff' : col,
+    fillColor: col,
+    fillOpacity: 0.9,
+    weight: isNew ? 3 : 1.5,
+    className: isNew ? 'radar-new-pulse' : ''
+  });
+
+  const popupHtml = `
+    <div class="cctv-popup">
+      <div class="pop-loc">${escapeHtml(f.loc)}</div>
+      <div class="pop-meta">${escapeHtml(f.tag)} • ${escapeHtml(f.st || f.co)}</div>
+      <div class="pop-coords">LAT: ${f.lat.toFixed(4)}° / LON: ${f.lon.toFixed(4)}°</div>
+      <div class="pop-status" style="color:var(--green);font-size:10px;margin-top:4px">● STATUS: VERIFIED LIVE // GOD'S EYE UPLINK</div>
+      <div class="pop-btns">
+        <button onclick="tuneFromMap(0, ${i}, this)">TUNE CAM 1</button>
+        <button onclick="tuneFromMap(1, ${i}, this)">TUNE CAM 2</button>
+        <button onclick="tuneFromMap(2, ${i}, this)">TUNE CAM 3</button>
+        <button onclick="tuneFromMap(3, ${i}, this)">TUNE CAM 4</button>
+      </div>
+    </div>
+  `;
+  marker.bindPopup(popupHtml, { maxWidth: 320 });
+  f._marker = marker;
+  mapMarkersCluster.addLayer(marker);
+
+  if (isNew) {
+    setTimeout(() => {
+      if (f._marker) {
+        f._marker.setStyle({ radius: 5, color: col, weight: 1.5 });
+      }
+    }, 4500);
+  }
+}
+
+// Dynamically removes an offline stream marker from the Leaflet radar map
+function removeFeedMarkerFromMap(f) {
+  if (!mapMarkersCluster || !f || !f._marker) return;
+  try {
+    mapMarkersCluster.removeLayer(f._marker);
+  } catch (e) {}
+  f._marker = null;
+}
+
+// Appends an intercept message to the bottom scrolling wiretap
+function logWiretap(msg) {
+  const el = document.getElementById("wiretapText");
+  if (!el) return;
+  const stamp = new Date().toTimeString().split(' ')[0];
+  el.textContent = `[${stamp}] ${msg} • ` + el.textContent.slice(0, 800);
+}
+
+// God's Eye Reconnaissance: Global Satellite Discovery Sweep
+function godsEyeReconSweep() {
+  if (!godsEyeActive || GODS_EYE_CANDIDATES.length === 0) return;
+  
+  godsEyeSectorIdx = (godsEyeSectorIdx + 1) % GODS_EYE_SECTORS.length;
+  const currentSector = GODS_EYE_SECTORS[godsEyeSectorIdx];
+  godsEyeScannedCount += 12;
+
+  // Retrieve candidate
+  const candidate = GODS_EYE_CANDIDATES[godsEyeCandidateIdx];
+  godsEyeCandidateIdx = (godsEyeCandidateIdx + 1) % GODS_EYE_CANDIDATES.length;
+
+  // Check if candidate already exists in POOL
+  const exists = POOL.some(p => p.loc === candidate.loc || (p.src && p.src === candidate.src));
+  if (exists) return;
+
+  candidate.online = true;
+  POOL.push(candidate);
+  const newIdx = POOL.length - 1;
+  godsEyeDiscoveredCount++;
+
+  // Dynamically appear on map
+  if (mapInitialized && mapMarkersCluster) {
+    addFeedMarkerToMap(candidate, newIdx, true);
+  }
+
+  updateOnlineCounters();
+
+  // Play subtle tactical acquisition chirp
+  if (sfxEnabled && Math.random() < 0.4) {
+    playSfx('ping');
+  }
+
+  // Telemetry notification
+  logWiretap(`[👁️ GOD'S EYE] RECON TARGET ACQUIRED: ${candidate.loc} [${candidate.lat}°, ${candidate.lon}°] -> STREAM ONLINE`);
+  
+  const noticeModal = document.getElementById("mapModal");
+  if (noticeModal && !noticeModal.classList.contains("hidden")) {
+    showMapNotice(`👁️ GOD'S EYE ACQUIRED: ${candidate.loc} [${candidate.st || candidate.co}]`, 2500);
+  }
+}
+
+// God's Eye Health Sweeper: Checks stream aliveness and removes dead streams
+function godsEyeHealthSweep() {
+  if (!godsEyeActive || POOL.length === 0) return;
+
+  // Pick 3 random feeds to verify heartbeat
+  for (let k = 0; k < 3; k++) {
+    const idx = Math.floor(Math.random() * POOL.length);
+    const feed = POOL[idx];
+    if (!feed) continue;
+
+    // If feed was flagged in deadSet or marked offline
+    if (deadSet.has(key(feed)) && feed.online !== false) {
+      feed.online = false;
+      godsEyeOfflineCount++;
+      removeFeedMarkerFromMap(feed);
+      updateOnlineCounters();
+      logWiretap(`[HEALTH CHECK] CARRIER LOST: ${feed.loc} DECOMMISSIONED FROM RADAR`);
+    } else if (feed.online === false && !deadSet.has(key(feed))) {
+      // Re-acquired live stream
+      feed.online = true;
+      godsEyeOfflineCount = Math.max(0, godsEyeOfflineCount - 1);
+      if (mapInitialized && mapMarkersCluster) {
+        addFeedMarkerToMap(feed, idx, true);
+      }
+      updateOnlineCounters();
+      logWiretap(`[HEALTH CHECK] CARRIER RESTORED: ${feed.loc} RE-CONNECTED TO GRID`);
+    }
+  }
+}
+
+// Starts the God's Eye planetary reconnaissance worker
+function startGodsEyeEngine() {
+  if (godsEyeInterval) clearInterval(godsEyeInterval);
+  if (godsEyeHealthInterval) clearInterval(godsEyeHealthInterval);
+
+  setTimeout(godsEyeReconSweep, 1800);
+  setTimeout(godsEyeHealthSweep, 4000);
+
+  // Every 6.5 seconds, discover / acquire new streams
+  godsEyeInterval = setInterval(godsEyeReconSweep, 6500);
+  // Every 8.5 seconds, check health and prune offline streams
+  godsEyeHealthInterval = setInterval(godsEyeHealthSweep, 8500);
+
+  logWiretap("[👁️ GOD'S EYE] PLANETARY SURVEILLANCE ENGINE ENGAGED // UPLINK NOMINAL");
+}
+
+function stopGodsEyeEngine() {
+  if (godsEyeInterval) clearInterval(godsEyeInterval);
+  if (godsEyeHealthInterval) clearInterval(godsEyeHealthInterval);
+  godsEyeInterval = null;
+  godsEyeHealthInterval = null;
+  godsEyeActive = false;
+  logWiretap("[👁️ GOD'S EYE] SURVEILLANCE ENGINE PAUSED BY OPERATOR");
+}
+
+
 function initMap() {
   if (mapInitialized) return;
   mapInitialized = true;
@@ -8989,27 +9260,9 @@ function initMap() {
 
   for (let i = 0; i < POOL.length; i++) {
     const f = POOL[i];
-    if (f.lat == null || f.lon == null) continue;
-    const col = f.ty === 'TRAFFIC' ? '#33ff66' : (f.ty === 'URBAN' ? '#33ddff' : (f.ty === 'BEACH' ? '#00e5ff' : '#ffb000'));
-    const marker = L.circleMarker([f.lat, f.lon], {
-      radius: 5, color: col, fillColor: col, fillOpacity: 0.85, weight: 1.5
-    });
-
-    const popupHtml = `
-      <div class="cctv-popup">
-        <div class="pop-loc">${escapeHtml(f.loc)}</div>
-        <div class="pop-meta">${escapeHtml(f.tag)} • ${escapeHtml(f.st || f.co)}</div>
-        <div class="pop-coords">LAT: ${f.lat.toFixed(4)}° / LON: ${f.lon.toFixed(4)}°</div>
-        <div class="pop-btns">
-          <button onclick="tuneFromMap(0, ${i}, this)">TUNE CAM 1</button>
-          <button onclick="tuneFromMap(1, ${i}, this)">TUNE CAM 2</button>
-          <button onclick="tuneFromMap(2, ${i}, this)">TUNE CAM 3</button>
-          <button onclick="tuneFromMap(3, ${i}, this)">TUNE CAM 4</button>
-        </div>
-      </div>
-    `;
-    marker.bindPopup(popupHtml, { maxWidth: 320 });
-    mapMarkersCluster.addLayer(marker);
+    if (f.online !== false) {
+      addFeedMarkerToMap(f, i, false);
+    }
   }
 
   mapInstance.addLayer(mapMarkersCluster);
@@ -9122,6 +9375,8 @@ function execSpyCommand(raw) {
     termLog("  <b>scan</b>                    - Toggle auto-surveillance patrol mode");
     termLog("  <b>lockdown</b>                - Engage DEFCON 1 emergency protocol");
     termLog("  <b>status</b>                  - Display grid nodes & satellite telemetry");
+    termLog("  <b>godseye</b>                 - Display God's Eye satellite recon telemetry");
+    termLog("  <b>godseye scan</b>            - Force immediate worldwide stream acquisition burst");
     termLog("  <b>clear</b>                   - Clear terminal display");
   } else if (cmd === "locate" || cmd === "find") {
     const q = parts.slice(1).join(" ").toUpperCase();
@@ -9193,6 +9448,28 @@ function execSpyCommand(raw) {
     termLog(`GRID DATABASE: ${POOL.length.toLocaleString()} ACTIVE GLOBAL FEEDS`);
     termLog(`SATELLITE LINK: ${SATS[satIdx].name} [OPTIMAL]`);
     termLog(`DEFCON: ${currentDefcon} • CRT: ${crtEnabled ? 'ON' : 'OFF'} • SFX: ${sfxEnabled ? 'ON' : 'OFF'}`);
+  } else if (cmd === "godseye") {
+    if (arg1 === "scan") {
+      godsEyeReconSweep();
+      godsEyeReconSweep();
+      termLog("👁️ GOD'S EYE: PLANETARY BURST ACQUISITION EXECUTED", "var(--green)");
+    } else if (arg1 === "toggle" || arg1 === "pause" || arg1 === "stop") {
+      if (godsEyeActive) {
+        stopGodsEyeEngine();
+        termLog("👁️ GOD'S EYE: SURVEILLANCE ENGINE PAUSED", "#ffaa00");
+      } else {
+        startGodsEyeEngine();
+        termLog("👁️ GOD'S EYE: SURVEILLANCE ENGINE RESUMED", "var(--green)");
+      }
+    } else {
+      termLog("<b>👁️ GOD'S EYE GLOBAL RECONNAISSANCE TELEMETRY:</b>", "#00e5ff");
+      termLog(`  ENGINE: ${godsEyeActive ? "ACTIVE // PLANETARY CONTINUOUS SWEEP" : "PAUSED"}`);
+      termLog(`  SECTOR: ${GODS_EYE_SECTORS[godsEyeSectorIdx]}`);
+      termLog(`  GLOBAL POOL SIZE: ${POOL.length.toLocaleString()} VERIFIED NODES`);
+      termLog(`  DISCOVERED ON-THE-FLY: +${godsEyeDiscoveredCount} STREAMS`);
+      termLog(`  DECOMMISSIONED DEAD NODES: ${godsEyeOfflineCount} STREAMS`);
+      termLog("  RADAR STATUS: DYNAMIC LEAFLET CLUSTER INTEGRATION (AUTO APPEAR / VANISH)");
+    }
   } else if (cmd === "clear") {
     const out = document.getElementById("termOutput");
     if (out) out.innerHTML = "";
@@ -9318,6 +9595,9 @@ applyCrt(crtEnabled);
 if (document.getElementById("sfxBtn")) {
   document.getElementById("sfxBtn").textContent = sfxEnabled ? "🔊 SFX: ON" : "🔇 SFX: OFF";
 }
+
+// Engage God's Eye Continuous Planetary Surveillance Engine
+startGodsEyeEngine();
 
 document.getElementById("refreshBtn").onclick = () => refreshCatalogs(true);
 maybeRefresh(false);
