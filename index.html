@@ -226,6 +226,22 @@
   <span>SHUFFLE or per-cam ⚄ dice for new feed • <b>click a camera</b> for its audio (click again to mute)</span>
 </footer>
 
+<div id="mapModal" class="map-modal hidden">
+  <div class="map-header">
+    <div class="map-title">
+      <span class="radar-blip">●</span> TACTICAL RADAR // GLOBAL SURVEILLANCE GRID
+      <small id="mapCamCount">6,348 CAMERAS ONLINE</small>
+    </div>
+    <div class="map-controls">
+      <input type="text" id="mapSearch" placeholder="SEARCH CITIES / HIGHWAYS / REGIONS (Press Enter)..." />
+      <button id="closeMap" class="secondary" onclick="closeMapModal()" title="Return to quad camera grid (ESC)" style="background:#2a1111;color:#ff5555;border:1px solid #ff4444;font-weight:bold;cursor:pointer;padding:8px 16px;letter-spacing:1px">✕ CLOSE MAP (ESC)</button>
+    </div>
+  </div>
+  <div id="mapNotice" class="map-notice"></div>
+  <div id="camMap"></div>
+</div>
+
+
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
 // ---- Feed pool ----
@@ -6588,7 +6604,21 @@ let current = [null, null, null, null];
 const players = [null, null, null, null];   // YT.Player instances
 const hlsObjs = [null, null, null, null];   // hls.js instances
 const timers  = [null, null, null, null];   // watchdog timeouts
-const deadSet = new Set();                  // feeds proven dead this session
+const deadSet = new Set();
+// ================= Pinning & Slot Persistence =================
+let manualPin = [false, false, false, false];
+try {
+  const savedPin = JSON.parse(localStorage.getItem("secgrid_pinned") || "[]");
+  if (Array.isArray(savedPin) && savedPin.length === 4) manualPin = savedPin;
+} catch (e) {}
+
+function saveCurrentSlots() {
+  try {
+    localStorage.setItem("secgrid_slots", JSON.stringify(current));
+    localStorage.setItem("secgrid_pinned", JSON.stringify(manualPin));
+  } catch (e) {}
+}
+                  // feeds proven dead this session
 let skipped = 0;
 const autoFails = [0, 0, 0, 0];             // consecutive auto-retunes per slot (loop guard)
 let audibleSlot = -1;                       // which tile currently has audio (-1 = all muted)
@@ -6765,9 +6795,17 @@ function mount(slot, feed) {
 
   const ok = () => { autoFails[slot] = 0; const t = document.getElementById(`tuning-${slot}`); if (t) t.classList.add("hidden"); };
   const fail = (why) => {
+    const t = document.getElementById(`tuning-${slot}`);
+    // If the user explicitly chose/pinned this camera from the map, NEVER overwrite it with a random stream!
+    if (manualPin[slot]) {
+      if (t) {
+        t.classList.remove("hidden");
+        t.innerHTML = `SIGNAL LOST<small>${why} — manual selection preserved (click ⚄ dice to reroll)</small>`;
+      }
+      return;
+    }
     markDead(feed);
     autoFails[slot]++;
-    const t = document.getElementById(`tuning-${slot}`);
     if (autoFails[slot] > 4) {
       // Stop auto-looping: park on SIGNAL LOST and let the user dice manually.
       if (t) { t.classList.remove("hidden"); t.innerHTML = `SIGNAL LOST<small>${why} — gave up auto-tuning, hit ⚄ dice</small>`; }
@@ -6776,10 +6814,14 @@ function mount(slot, feed) {
     if (t) { t.classList.remove("hidden"); t.innerHTML = `SIGNAL LOST — RETUNING…<small>${why}</small>`; }
     timers[slot] = setTimeout(() => rerollOne(slot, true), 1500);
   };
-  // Watchdog: if nothing is playing after 15s, move on silently.
+  // Watchdog: if nothing is playing after 20s, handle silently (unless pinned or map modal is open).
   timers[slot] = setTimeout(() => {
+    const modal = document.getElementById("mapModal");
+    const isMapOpen = modal && !modal.classList.contains("hidden");
+    // If user is currently browsing the map or camera is pinned, don't auto-reroll!
+    if (isMapOpen || manualPin[slot]) return;
     if (!document.getElementById(`tuning-${slot}`)?.classList.contains("hidden")) fail("timeout");
-  }, 15000);
+  }, 20000);
 
   if (feed.kind === "hls") {
     const video = document.getElementById(holderId);
@@ -6841,7 +6883,10 @@ function mount(slot, feed) {
 }
 
 function rerollOne(slot, auto = false) {
-  if (!auto) autoFails[slot] = 0;  // manual dice resets the loop guard
+  if (!auto) {
+    autoFails[slot] = 0;  // manual dice resets the loop guard
+    manualPin[slot] = false;
+  }
   let pool = candidates(slot);
   if (!pool.length) {
     if (matchCount() === 0) { showNoFeed(slot); return; }  // filters too narrow — don't nuke the blacklist
@@ -6850,11 +6895,13 @@ function rerollOne(slot, auto = false) {
   const feed = pool[Math.floor(Math.random() * pool.length)];
   noteRecent([feed]);
   mount(slot, feed);
+  saveCurrentSlots();
 }
 
 function shuffleAll() {
   muteAll();
   audibleSlot = -1;
+  manualPin = [false, false, false, false];
   autoFails[0] = autoFails[1] = autoFails[2] = autoFails[3] = 0;
   const pool = [...candidates(-1)].sort(() => Math.random() - 0.5);
   const picked = pool.slice(0, 4);
@@ -6863,6 +6910,7 @@ function shuffleAll() {
     if (picked[i]) mount(i, picked[i]);
     else showNoFeed(i);
   }
+  saveCurrentSlots();
 }
 function showNoFeed(slot) {
   teardown(slot);
@@ -6890,6 +6938,13 @@ function tick() {
 
 document.getElementById("shuffleBtn").onclick = shuffleAll;
 document.addEventListener("keydown", e => {
+  const modal = document.getElementById("mapModal");
+  const isMapOpen = modal && !modal.classList.contains("hidden");
+  if (isMapOpen) {
+    // When map is open, Space or R should never trigger random shuffle!
+    if (e.key === "Escape") closeMapModal();
+    return;
+  }
   if (e.key.toLowerCase() === "r" || e.key === " ") { e.preventDefault(); shuffleAll(); }
 });
 
@@ -7091,7 +7146,21 @@ function maybeRefresh(manual) {
 loadAuto();
 initFilters();
 drawStatline();
-shuffleAll();
+
+// Restore saved camera slots if available; otherwise shuffle random 4
+(function initSlots() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem("secgrid_slots") || "null"); } catch (e) {}
+  if (Array.isArray(saved) && saved.length === 4 && saved.some(s => s !== null)) {
+    for (let i = 0; i < 4; i++) {
+      if (saved[i]) mount(i, saved[i]);
+      else rerollOne(i);
+    }
+  } else {
+    shuffleAll();
+  }
+})();
+
 tick();
 setInterval(tick, 1000);
 document.getElementById("refreshBtn").onclick = () => refreshCatalogs(true);
@@ -7121,11 +7190,26 @@ function showMapNotice(msg) {
   n._timer = setTimeout(() => { n.style.display = "none"; }, 3000);
 }
 
-window.tuneFromMap = function(slot, poolIdx) {
+window.tuneFromMap = function(slot, poolIdx, btnEl) {
   const feed = POOL[poolIdx];
   if (!feed) return;
+  manualPin[slot] = true;
   mount(slot, feed);
+  saveCurrentSlots();
   showMapNotice(`TUNED ▸ CAM 0${slot + 1} TO: ${feed.loc}`);
+  if (btnEl) {
+    const orig = btnEl.textContent;
+    btnEl.textContent = `✔ CAM 0${slot + 1} TUNED!`;
+    btnEl.style.background = "#33ff66";
+    btnEl.style.color = "#000";
+    btnEl.style.fontWeight = "bold";
+    setTimeout(() => {
+      btnEl.textContent = orig;
+      btnEl.style.background = "";
+      btnEl.style.color = "";
+      btnEl.style.fontWeight = "";
+    }, 1800);
+  }
 };
 
 function initMap() {
@@ -7196,10 +7280,10 @@ function initMap() {
         <div class="pop-meta">${escapeHtml(f.tag)} • ${escapeHtml(f.st || f.co)}</div>
         <div class="pop-coords">LAT: ${f.lat.toFixed(4)}° / LON: ${f.lon.toFixed(4)}°</div>
         <div class="pop-btns">
-          <button onclick="tuneFromMap(0, ${i})">TUNE CAM 1</button>
-          <button onclick="tuneFromMap(1, ${i})">TUNE CAM 2</button>
-          <button onclick="tuneFromMap(2, ${i})">TUNE CAM 3</button>
-          <button onclick="tuneFromMap(3, ${i})">TUNE CAM 4</button>
+          <button onclick="tuneFromMap(0, ${i}, this)">TUNE CAM 1</button>
+          <button onclick="tuneFromMap(1, ${i}, this)">TUNE CAM 2</button>
+          <button onclick="tuneFromMap(2, ${i}, this)">TUNE CAM 3</button>
+          <button onclick="tuneFromMap(3, ${i}, this)">TUNE CAM 4</button>
         </div>
       </div>
     `;
@@ -7244,6 +7328,11 @@ function openMapModal() {
 function closeMapModal() {
   const m = document.getElementById("mapModal");
   if (m) m.classList.add("hidden");
+  // Resume any paused video elements now that grid is front & center
+  for (let s = 0; s < 4; s++) {
+    const v = document.querySelector(`#cam${s} video`);
+    if (v && v.paused) v.play().catch(() => {});
+  }
 }
 
 // Bind button clicks
@@ -7268,17 +7357,7 @@ document.addEventListener("keydown", e => {
 
 </script>
 
-<div id="mapModal" class="map-modal hidden">
-  <div class="map-header">
-    <div class="map-title">
-      <span class="radar-blip">●</span> TACTICAL RADAR // GLOBAL SURVEILLANCE GRID
-      <small id="mapCamCount">6,348 CAMERAS ONLINE</small>
-    </div>
-    <div class="map-controls">
-      <input type="text" id="mapSearch" placeholder="SEARCH CITIES / HIGHWAYS / REGIONS (Press Enter)..." />
-      <button id="closeMap" class="secondary">✕ CLOSE (ESC)</button>
-    </div>
-  </div>
+
   <div id="mapNotice" class="map-notice"></div>
   <div id="camMap"></div>
 </div>
