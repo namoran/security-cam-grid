@@ -295,7 +295,108 @@
     padding: 1px 5px; margin-right: 4px; color: var(--theme-color);
   }
 
-  .cam-btns { position: absolute; top: 10px; right: 75px; z-index: 5; }
+  .cam-btns { position: absolute; top: 10px; right: 85px; z-index: 6; display: flex; gap: 4px; }
+  .cam-btns button {
+    padding: 2px 7px; font-size: 11px; background: rgba(10, 20, 10, 0.85);
+    border: 1px solid var(--theme-border); color: #8ba58b; cursor: pointer;
+    font-family: inherit; letter-spacing: 1px;
+  }
+  .cam-btns button:hover { background: var(--theme-color); color: #000; }
+  .cam-btns button[data-source] { color: var(--theme-color); border-color: rgba(0, 255, 102, 0.5); }
+  .cam-btns button[data-source]:hover { background: var(--theme-color); color: #000; }
+  .click-catcher { position: absolute; inset: 0; z-index: 4; cursor: pointer; }
+
+  /* On-Screen Tactical Source HUD Overlay */
+  .stream-source-hud {
+    position: absolute; bottom: 32px; left: 10px; right: 10px;
+    background: rgba(4, 14, 4, 0.96); border: 1px solid var(--theme-border);
+    box-shadow: 0 0 16px rgba(0, 255, 102, 0.28), inset 0 0 12px rgba(0, 20, 0, 0.85);
+    padding: 10px 12px; z-index: 25; font-family: inherit;
+    display: flex; flex-direction: column; gap: 5px;
+    animation: hudFadeIn 0.15s ease-out; pointer-events: auto;
+  }
+  .stream-source-hud.hidden { display: none; }
+  @keyframes hudFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .src-hud-header {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .src-hud-badge {
+    color: var(--theme-color); font-size: 10px; font-weight: bold; letter-spacing: 1.5px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .src-hud-badge::before {
+    content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: #00ff66; box-shadow: 0 0 6px #00ff66; animation: blink 1.2s infinite;
+  }
+  .src-hud-close {
+    background: transparent; border: 1px solid var(--theme-border); color: #8ba58b;
+    padding: 1px 6px; font-size: 10px; cursor: pointer; font-family: inherit;
+  }
+  .src-hud-close:hover { background: #ff3344; color: #fff; border-color: #ff3344; }
+  .src-hud-loc {
+    color: #ffffff; font-size: 12px; font-weight: bold; letter-spacing: 1px;
+    text-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+  }
+  .src-hud-meta {
+    color: #8ba58b; font-size: 10px; letter-spacing: 1px;
+  }
+  .src-hud-url-box {
+    background: rgba(0, 0, 0, 0.75); border: 1px solid rgba(0, 255, 102, 0.25);
+    padding: 5px 8px; border-radius: 2px;
+  }
+  .src-hud-label {
+    color: #6a7d6a; font-size: 9px; letter-spacing: 1px; margin-bottom: 2px;
+  }
+  .src-hud-link {
+    color: var(--theme-color); font-size: 11px; text-decoration: underline;
+    word-break: break-all; display: block; font-weight: bold;
+  }
+  .src-hud-link:hover { color: #fff; text-shadow: 0 0 8px var(--theme-color); }
+  .src-hud-actions {
+    display: flex; gap: 6px; align-items: center; margin-top: 3px; flex-wrap: wrap;
+  }
+  .src-hud-btn {
+    background: rgba(10, 25, 10, 0.9); border: 1px solid var(--theme-border);
+    color: var(--theme-color); padding: 3px 8px; font-size: 10px;
+    cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+    gap: 4px; font-weight: bold; letter-spacing: 1px; font-family: inherit;
+  }
+  .src-hud-btn:hover { background: var(--theme-color); color: #000; }
+  .src-hud-btn.primary { background: var(--theme-color); color: #000; }
+  .src-hud-btn.primary:hover { background: #ffffff; color: #000; box-shadow: 0 0 8px #fff; }
+  .osd-src-pill {
+    pointer-events: auto; background: rgba(0, 255, 102, 0.15); border: 1px solid var(--theme-border);
+    color: var(--theme-color); padding: 1px 5px; font-size: 10px; text-decoration: none;
+    cursor: pointer; vertical-align: middle; margin-left: 6px; font-weight: bold; display: inline-block;
+  }
+  .osd-src-pill:hover { background: var(--theme-color); color: #000; }
+  
+  /* Map Popup Source Box */
+  .pop-source-box {
+    margin: 8px 0; padding: 6px 8px; background: rgba(0, 255, 102, 0.08);
+    border-left: 3px solid var(--theme-color); border-radius: 2px;
+  }
+  .pop-source-box a.pop-source-url {
+    color: var(--theme-color) !important; font-size: 11px !important; text-decoration: underline !important;
+    font-weight: bold; word-break: break-all; display: block; margin-bottom: 5px;
+  }
+  .pop-source-box a.pop-source-url:hover { color: #fff !important; text-shadow: 0 0 6px var(--theme-color); }
+  .pop-source-actions {
+    display: flex; gap: 6px; margin-top: 4px;
+  }
+  .pop-source-actions a.pop-source-btn {
+    background: var(--theme-color); color: #000 !important; padding: 3px 8px; font-size: 10px;
+    font-weight: bold; text-decoration: none; border-radius: 2px; display: inline-block;
+  }
+  .pop-source-actions a.pop-source-btn:hover { background: #fff; }
+  .pop-source-actions button.pop-source-copy {
+    background: #112211; color: var(--theme-color); border: 1px solid var(--theme-border);
+    padding: 2px 7px; font-size: 10px; cursor: pointer; border-radius: 2px; font-family: inherit;
+  }
+  .pop-source-actions button.pop-source-copy:hover { background: var(--theme-color); color: #000; }
   .cam-btns button {
     padding: 2px 7px; font-size: 11px; background: rgba(10, 20, 10, 0.85);
     border: 1px solid var(--theme-border); color: #8ba58b; cursor: pointer;
@@ -601,7 +702,7 @@
 <div class="wiretap-ticker">
   <div class="wiretap-label"><span>●</span> LIVE SIGINT INTERCEPT:</div>
   <div class="wiretap-scroll" id="wiretapText">
-    [05:42:19] SIGINT INTERCEPT: ENCRYPTED CARRIER BURST DETECTED // NODE 04 (BERLIN) // 128-BIT SKIPJACK DECRYPT IN PROGRESS... • [05:42:33] SATELLITE HANDOFF: USA-186 IN RANGE OVER NORTH ATLANTIC // REAL-TIME ORBITAL SYNC ESTABLISHED... • [05:42:51] FACIAL BIOMETRIC MATCH: 94.2% CONFIDENCE ON TRANSIT FEED // LOGGED TO WATCHLIST DB... • [05:43:08] GLOBAL GRID STATUS: 6,599 FEEDS ONLINE ACROSS 52 COUNTRIES // ALL NODES SECURE... • [05:43:24] MICROWAVE RELAY: LONDON TOWER BRIDGE DIRECT LINK OPERATIONAL // LATENCY: 28ms...
+    [05:42:19] SIGINT INTERCEPT: ENCRYPTED CARRIER BURST DETECTED // NODE 04 (BERLIN) // 128-BIT SKIPJACK DECRYPT IN PROGRESS... • [05:42:33] SATELLITE HANDOFF: USA-186 IN RANGE OVER NORTH ATLANTIC // REAL-TIME ORBITAL SYNC ESTABLISHED... • [05:42:51] FACIAL BIOMETRIC MATCH: 94.2% CONFIDENCE ON TRANSIT FEED // LOGGED TO WATCHLIST DB... • [05:43:08] GLOBAL GRID STATUS: 6,591 FEEDS ONLINE ACROSS 52 COUNTRIES // ALL NODES SECURE... • [05:43:24] MICROWAVE RELAY: LONDON TOWER BRIDGE DIRECT LINK OPERATIONAL // LATENCY: 28ms...
   </div>
 </div>
 
@@ -613,7 +714,7 @@
   </div>
   <div class="terminal-body" id="termOutput">
     <div>TYPE <b>HELP</b> FOR CLASSIFIED SURVEILLANCE DIRECTIVES.</div>
-    <div>GRID NODES: 6,599 CAMERAS ONLINE ACROSS 52 COUNTRIES • CLEARANCE LEVEL: TS/SCI // NOFORN.</div>
+    <div>GRID NODES: 6,591 CAMERAS ONLINE ACROSS 52 COUNTRIES • CLEARANCE LEVEL: TS/SCI // NOFORN.</div>
     <div style="color:var(--accent)">READY FOR COMMAND.</div>
   </div>
   <div class="terminal-prompt">
@@ -646,7 +747,7 @@
   <div class="map-header">
     <div class="map-title">
       <span class="radar-blip">●</span> TACTICAL RADAR // GLOBAL SURVEILLANCE GRID
-      <small id="mapCamCount">6,599 CAMERAS ONLINE</small><span id="godsEyeMapTag" style="color:#00e5ff;font-size:11px;letter-spacing:1px;margin-left:10px;font-weight:bold"><span class="gods-eye-icon">👁️</span> GOD'S EYE: SCANNING // <span id="godsEyeOnlineSpan">6,599 LIVE</span></span>
+      <small id="mapCamCount">6,591 CAMERAS ONLINE</small><span id="godsEyeMapTag" style="color:#00e5ff;font-size:11px;letter-spacing:1px;margin-left:10px;font-weight:bold"><span class="gods-eye-icon">👁️</span> GOD'S EYE: SCANNING // <span id="godsEyeOnlineSpan">6,591 LIVE</span></span>
       <span id="radarCoords" style="color:var(--theme-color);font-size:11px;letter-spacing:1.5px;margin-left:14px;font-weight:normal">TARGET: 38.5000°N / 95.0000°W</span>
       <span id="radarAzimuthDisplay" style="color:var(--accent);font-size:11px;letter-spacing:1px;margin-left:12px;font-weight:bold">AZIMUTH: 000° // 10 RPM</span>
     </div>
@@ -6860,22 +6961,18 @@ const POOL = [
   {kind: "yt", yt: "elGbyX0KCMg", loc: "MONT BLANC / CHAMONIX", tag: "YT LIVE", ty: "NATURE", ct: "Europe", co: "France", st: "Chamonix", lat: 45.9237, lon: 6.8694},
   {kind: "yt", yt: "r8N6IsoIkTk", loc: "GRAND CANAL / RIALTO, VENICE", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Italy", st: "Venice", lat: 45.438, lon: 12.3359},
   {kind: "yt", yt: "a1mcaV3Sf9U", loc: "ST MARK'S BASIN, VENICE", tag: "YT LIVE", ty: "PORT", ct: "Europe", co: "Italy", st: "Venice", lat: 45.4342, lon: 12.3389},
-  {kind: "yt", yt: "wMT2aNcP4Wg", loc: "COLOSSEUM & FORUM, ROME", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Italy", st: "Rome", lat: 41.8902, lon: 12.4922},
   {kind: "yt", yt: "03pYP2Nmreo", loc: "ST PETER'S BASILICA / VATICAN", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Italy", st: "Vatican City", lat: 41.9029, lon: 12.4534},
   {kind: "yt", yt: "dsoM6TYIkOI", loc: "MILAN DUOMO & SKYLINE", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Italy", st: "Milan", lat: 45.4642, lon: 9.19},
   {kind: "yt", yt: "d0-a8UJAyvY", loc: "LAKE COMO / BELLAGIO", tag: "YT LIVE", ty: "NATURE", ct: "Europe", co: "Italy", st: "Lake Como", lat: 45.9872, lon: 9.2625},
   {kind: "yt", yt: "EGk3Mr0OshE", loc: "MOUNT ETNA VOLCANO, SICILY", tag: "YT LIVE", ty: "NATURE", ct: "Europe", co: "Italy", st: "Catania", lat: 37.751, lon: 14.9934},
   {kind: "yt", yt: "hRw1_JQMQoE", loc: "PALMA DE MALLORCA HARBOUR", tag: "YT LIVE", ty: "PORT", ct: "Europe", co: "Spain", st: "Palma", lat: 39.5696, lon: 2.6502},
-  {kind: "yt", yt: "IRqboacDNFg", loc: "BRANDENBURG GATE, BERLIN", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Germany", st: "Berlin", lat: 52.5163, lon: 13.3777},
   {kind: "yt", yt: "GF1DYvxDq44", loc: "HAMBURG PORT / ELBE RIVER", tag: "YT LIVE", ty: "PORT", ct: "Europe", co: "Germany", st: "Hamburg", lat: 53.5453, lon: 9.9678},
   {kind: "yt", yt: "Li3Dvqlo5uE", loc: "FRANKFURT MAIN SKYLINE", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Germany", st: "Frankfurt", lat: 50.1109, lon: 8.6821},
   {kind: "yt", yt: "enYFXf8u7Lc", loc: "LAKE ZURICH / ALPS", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Switzerland", st: "Zurich", lat: 47.3769, lon: 8.5417},
-  {kind: "yt", yt: "4WIldSQM8pQ", loc: "DONAUMARINA & DANUBE RIVER, VIENNA", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Austria", st: "Vienna", lat: 48.2045, lon: 16.4292},
   {kind: "yt", yt: "Gd9d4q6WvUY", loc: "DAM SQUARE & CANALS, AMSTERDAM", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Netherlands", st: "Amsterdam", lat: 52.3702, lon: 4.8952},
   {kind: "yt", yt: "nFozEhYTEMo", loc: "ROTTERDAM ERASMUS BRIDGE", tag: "YT LIVE", ty: "PORT", ct: "Europe", co: "Netherlands", st: "Rotterdam", lat: 51.9089, lon: 4.4878},
   {kind: "yt", yt: "TTrzSdVej30", loc: "OUDENAARDE MARKT & TOWN HALL, BELGIUM", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Belgium", st: "East Flanders", lat: 50.8438, lon: 3.6044},
   {kind: "yt", yt: "kvYMIaXclIE", loc: "OLD TOWN SQ & CHARLES BRIDGE, PRAGUE", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Czech Republic", st: "Prague", lat: 50.0875, lon: 14.4211},
-  {kind: "yt", yt: "5p-s-1453Us", loc: "OIA CALDERA, SANTORINI", tag: "YT LIVE", ty: "BEACH", ct: "Europe", co: "Greece", st: "Santorini", lat: 36.4618, lon: 25.3753},
   {kind: "yt", yt: "YlMYlOjhF9U", loc: "GAMLA STAN, STOCKHOLM", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Sweden", st: "Stockholm", lat: 59.3293, lon: 18.0686},
   {kind: "yt", yt: "CvOB-Is_yYU", loc: "HELSINKI HARBOUR & SENATE SQ", tag: "YT LIVE", ty: "PORT", ct: "Europe", co: "Finland", st: "Helsinki", lat: 60.1699, lon: 24.9384},
   {kind: "yt", yt: "qkSvU9j4kqM", loc: "REYKJAVIK SKYLINE, ICELAND", tag: "YT LIVE", ty: "NATURE", ct: "Europe", co: "Iceland", st: "Reykjavik", lat: 64.1466, lon: -21.9426},
@@ -6900,7 +6997,6 @@ const POOL = [
   {kind: "yt", yt: "I7OY3JC15EE", loc: "STORY BRIDGE / SOUTH BANK, BRISBANE", tag: "YT LIVE", ty: "URBAN", ct: "Oceania", co: "Australia", st: "Brisbane", lat: -27.4698, lon: 153.0251},
   {kind: "yt", yt: "Ql7graq0I9M", loc: "AUCKLAND SKY TOWER & HARBOUR", tag: "YT LIVE", ty: "PORT", ct: "Oceania", co: "New Zealand", st: "Auckland", lat: -36.8485, lon: 174.7633},
   {kind: "yt", yt: "J4oNJrCzyzU", loc: "QUEENSTOWN / LAKE WAKATIPU", tag: "YT LIVE", ty: "NATURE", ct: "Oceania", co: "New Zealand", st: "Queenstown", lat: -45.0312, lon: 168.6626},
-  {kind: "yt", yt: "WFMLLZ_t5hI", loc: "WELLINGTON HARBOUR, NEW ZEALAND", tag: "YT LIVE", ty: "PORT", ct: "Oceania", co: "New Zealand", st: "Wellington", lat: -41.2865, lon: 174.7762},
   {kind: "yt", yt: "bbjwotvAvDM", loc: "TORONTO CN TOWER & SKYLINE", tag: "YT LIVE", ty: "URBAN", ct: "North America", co: "Canada", st: "Toronto", lat: 43.6426, lon: -79.3871},
   {kind: "yt", yt: "rxyNjFKwzJA", loc: "VANCOUVER HARBOUR & BURRARD INLET", tag: "YT LIVE", ty: "PORT", ct: "North America", co: "Canada", st: "Vancouver", lat: 49.2827, lon: -123.1207},
   {kind: "yt", yt: "qx7gry390YA", loc: "NIAGARA FALLS HORSESHOE FALLS", tag: "YT LIVE", ty: "NATURE", ct: "North America", co: "Canada", st: "Niagara Falls", lat: 43.0799, lon: -79.0747},
@@ -6913,7 +7009,6 @@ const POOL = [
   {kind: "yt", yt: "wyEi0OPai5g", loc: "COPACABANA BEACH, RIO DE JANEIRO", tag: "YT LIVE", ty: "BEACH", ct: "South America", co: "Brazil", st: "Rio de Janeiro", lat: -22.9711, lon: -43.1822},
   {kind: "yt", yt: "r8Busmkpsh8", loc: "OBELISCO & 9 DE JULIO, BUENOS AIRES", tag: "YT LIVE", ty: "URBAN", ct: "South America", co: "Argentina", st: "Buenos Aires", lat: -34.6037, lon: -58.3816},
   {kind: "yt", yt: "_Nrt155MExU", loc: "SANTIAGO DE CHILE SKYLINE & ANDES", tag: "YT LIVE", ty: "URBAN", ct: "South America", co: "Chile", st: "Santiago", lat: -33.4489, lon: -70.6693},
-  {kind: "yt", yt: "IGu55JrxyHU", loc: "TABLE MOUNTAIN & CAMPS BAY, CAPE TOWN", tag: "YT LIVE", ty: "BEACH", ct: "Africa", co: "South Africa", st: "Cape Town", lat: -33.9249, lon: 18.4241},
   {kind: "yt", yt: "Cq2qCph6Lx8", loc: "ROSIE'S PAN WATERHOLE, GREATER KRUGER", tag: "YT LIVE", ty: "NATURE", ct: "Africa", co: "South Africa", st: "Limpopo", lat: -24.0116, lon: 31.4859},
   {kind: "yt", yt: "AeMUdOPFcXI", loc: "NAMIB DESERT WATERHOLE, NAMIBIA", tag: "YT LIVE", ty: "NATURE", ct: "Africa", co: "Namibia", st: "Gondwana", lat: -24.4754, lon: 15.7957},
   {kind: "yt", yt: "JMMoRwYo5kE", loc: "OKAUKUEJO WATERHOLE, ETOSHA PARK", tag: "YT LIVE", ty: "NATURE", ct: "Africa", co: "Namibia", st: "Kunene", lat: -19.1822, lon: 15.9189},
@@ -7018,7 +7113,6 @@ const POOL = [
   {kind: "hls", src: "https://zssd-owlaviary.hls.camzonecdn.com/CamzoneStreams/zssd-owlaviary/HasBahCa.m3u8", loc: "SAN DIEGO ZOO OWL AVIARY, CA", tag: "CAMZONE US", ty: "NATURE", ct: "North America", co: "United States", st: "California", lat: 32.7353, lon: -117.149},
   {kind: "hls", src: "https://zssd-platypus.hls.camzonecdn.com/CamzoneStreams/zssd-platypus/HasBahCa.m3u8", loc: "SAN DIEGO ZOO PLATYPUS, CA", tag: "CAMZONE US", ty: "NATURE", ct: "North America", co: "United States", st: "California", lat: 32.7353, lon: -117.149},
   {kind: "yt", yt: "8MhY4vTPzzk", loc: "BARILOCHE LAKE NAHUEL HUAPI", tag: "YT LIVE", ty: "NATURE", ct: "South America", co: "Argentina", st: "Bariloche", lat: -41.1335, lon: -71.3103},
-  {kind: "yt", yt: "PcWmbS3oseA", loc: "VINA DEL MAR COASTAL PROMENADE, CHILE", tag: "YT LIVE", ty: "PORT", ct: "South America", co: "Chile", st: "Valpara\u00edso", lat: -33.0245, lon: -71.5518},
   {kind: "yt", yt: "f9uqHbXChno", loc: "VICTORIA FALLS, ZIMBABWE/ZAMBIA", tag: "YT LIVE", ty: "NATURE", ct: "Africa", co: "Zimbabwe", st: "Victoria Falls", lat: -17.9243, lon: 25.8572},
   {kind: "yt", yt: "iUdDKf9aDUU", loc: "DJUMA WATERHOLE, SABI SAND", tag: "YT LIVE", ty: "NATURE", ct: "Africa", co: "South Africa", st: "Sabi Sand", lat: -24.7891, lon: 31.5234},
   {kind: "yt", yt: "XyPU5-pNg5E", loc: "AMBOSELI WATERHOLE & MT KILIMANJARO VIEW", tag: "YT LIVE", ty: "NATURE", ct: "Africa", co: "Kenya", st: "Amboseli", lat: -2.6527, lon: 37.2606},
@@ -7044,7 +7138,6 @@ const POOL = [
   {kind: "yt", yt: "w_Dg2vC0tUE", loc: "NEVSKY PROSPEKT & GOSTINY DVOR, ST PETERSBURG", tag: "URBAN CAM", ty: "URBAN", ct: "Europe", co: "Russia", st: "St Petersburg", lat: 59.9343, lon: 30.3351},
   {kind: "yt", yt: "VhGdKCs5KIA", loc: "ST PETERSBURG CITY PANORAMA", tag: "URBAN CAM", ty: "URBAN", ct: "Europe", co: "Russia", st: "St Petersburg", lat: 59.9386, lon: 30.3141},
   {kind: "yt", yt: "8ZPr_hS9OTQ", loc: "MCMURDO SOUND UNDERWATER OCEAN OBSERVATORY", tag: "POLAR CAM", ty: "NATURE", ct: "Antarctica", co: "Antarctica", st: "Ross Island", lat: -77.846, lon: 166.668},
-  {kind: "yt", yt: "8lokpwTwZLE", loc: "MCMURDO STATION RESEARCH BASE, ANTARCTICA", tag: "POLAR CAM", ty: "URBAN", ct: "Antarctica", co: "Antarctica", st: "Ross Island", lat: -77.85, lon: 166.6667},
   {kind: "yt", yt: "X-ir2KfXMX0", loc: "FLAGSTAFF DOWNTOWN RAIL CORRIDOR, AZ", tag: "RAIL CAM", ty: "URBAN", ct: "North America", co: "United States", st: "Arizona", lat: 35.1983, lon: -111.6513},
   {kind: "yt", yt: "XWxyuL9dctA", loc: "BIG 10 CURVE & ROCKY MOUNTAINS, ARVADA CO", tag: "RAIL CAM", ty: "MOUNTAIN", ct: "North America", co: "United States", st: "Colorado", lat: 39.8028, lon: -105.0875},
   {kind: "yt", yt: "o-q0-AUjUHs", loc: "FOSTORIA IRON TRIANGLE, OH", tag: "RAIL CAM", ty: "URBAN", ct: "North America", co: "United States", st: "Ohio", lat: 41.1578, lon: -83.4169},
@@ -7663,35 +7756,125 @@ function ytSrc(feed) {
   return `https://www.youtube.com/embed/live_stream?channel=${feed.ch}&autoplay=1&mute=1&controls=0&playsinline=1&enablejsapi=1&modestbranding=1`;
 }
 
+function getFeedSourceUrl(f) {
+  if (!f) return "#";
+  if (f.kind === "yt") return `https://www.youtube.com/watch?v=${f.yt}`;
+  if (f.kind === "ytc") return `https://www.youtube.com/channel/${f.ch}/live`;
+  return f.src || "#";
+}
+
+function getFeedSourceLabel(f) {
+  if (!f) return "SOURCE STREAM";
+  if (f.kind === "yt") return `YouTube Live (ID: ${f.yt})`;
+  if (f.kind === "ytc") return "YouTube Live Channel";
+  try {
+    const u = new URL(f.src);
+    return u.hostname.replace(/^www\./, "");
+  } catch(e) {
+    return "HLS Live Stream";
+  }
+}
+
+function showSourceHud(slot) {
+  const hud = document.getElementById(`src-hud-${slot}`);
+  if (!hud) return;
+  hud.classList.remove("hidden");
+  playSfx("beep");
+  const f = current[slot];
+  if (f) {
+    const url = getFeedSourceUrl(f);
+    logWiretap(`[SOURCE UPLINK] CAM 0${slot + 1} (${f.loc}) -> ${url}`);
+  }
+}
+
+function dismissSourceHud(slot, e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  const hud = document.getElementById(`src-hud-${slot}`);
+  if (hud) hud.classList.add("hidden");
+}
+
+function toggleSourceHud(slot) {
+  const hud = document.getElementById(`src-hud-${slot}`);
+  if (!hud) return;
+  if (hud.classList.contains("hidden")) {
+    showSourceHud(slot);
+  } else {
+    dismissSourceHud(slot);
+  }
+}
+
+function copySourceToClipboard(url, btn, e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  navigator.clipboard.writeText(url).then(() => {
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = "✓ COPIED!";
+      setTimeout(() => { btn.innerHTML = orig; }, 1800);
+    }
+  }).catch(() => {});
+}
+
 function mount(slot, feed) {
   teardown(slot);
   current[slot] = feed;
   const el = document.getElementById("cam" + slot);
   const holderId = `yt-holder-${slot}-${Date.now()}`;
+  const sourceUrl = getFeedSourceUrl(feed);
+  const sourceLabel = getFeedSourceLabel(feed);
   el.innerHTML = `
     <div class="noise"></div>
     ${feed.kind === "hls"
       ? `<video id="${holderId}" muted playsinline autoplay></video>`
       : feed.kind === "ytc"
-        ? `<iframe id="${holderId}" src="${ytSrc(feed)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="${feed.loc}" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
-           <div class="click-catcher" id="catcher-${slot}" title="Click for this camera's audio"></div>`
+        ? `<iframe id="${holderId}" src="${ytSrc(feed)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="${escapeHtml(feed.loc)}" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
+           <div class="click-catcher" id="catcher-${slot}" title="Click for audio & source uplink"></div>`
         : `<div id="${holderId}" style="position:absolute;inset:0"></div>
-           <div class="click-catcher" id="catcher-${slot}" title="Click for this camera's audio"></div>`}
+           <div class="click-catcher" id="catcher-${slot}" title="Click for audio & source uplink"></div>`}
     <div class="tactical-corners"></div>
     <div class="corner-tr"></div>
     <div class="corner-bl"></div>
     <div class="target-reticle"><div class="target-lock-tag">[ + ] TRK-0${slot + 1} // ACQ 98%</div></div>
-    <div class="tuning" id="tuning-${slot}">TUNING…<small>${feed.loc}</small></div>
-    <div class="osd top-left"><span class="cam-name">CAM 0${slot + 1}</span> ${feed.loc} ${manualPin[slot] ? '<span class="pin-badge">🔒 PINNED TARGET</span>' : ''}</div>
+    <div class="tuning" id="tuning-${slot}">TUNING…<small>${escapeHtml(feed.loc)}</small></div>
+    <div class="osd top-left"><span class="cam-name">CAM 0${slot + 1}</span> ${escapeHtml(feed.loc)} ${manualPin[slot] ? '<span class="pin-badge">🔒 PINNED TARGET</span>' : ''} <a class="osd-src-pill" href="${sourceUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Open stream source">🔗 SRC ↗</a></div>
     <div class="osd top-center audio-badge" id="abadge-${slot}"></div>
     <div class="osd top-right">● REC // SECURE</div>
-    <div class="osd bottom-left">SP ▸ PLAY • ${feed.tag} <span id="vu-${slot}" style="display:none" class="vu-meter"><span class="vu-bar"></span><span class="vu-bar"></span><span class="vu-bar"></span><span class="vu-bar"></span><span class="vu-bar"></span></span></div>
+    <div class="osd bottom-left">SP ▸ PLAY • ${escapeHtml(feed.tag)} <span id="vu-${slot}" style="display:none" class="vu-meter"><span class="vu-bar"></span><span class="vu-bar"></span><span class="vu-bar"></span><span class="vu-bar"></span><span class="vu-bar"></span></span></div>
     <div class="osd bottom-right" data-ts="${slot}">--/--/---- --:--:--</div>
-    <div class="cam-btns"><button data-reroll="${slot}" title="Replace with another random feed">⚄ dice</button></div>`;
+    <div class="cam-btns">
+      <button data-source="${slot}" title="View official live stream source link">🔗 source</button>
+      <button data-reroll="${slot}" title="Replace with another random feed">⚄ dice</button>
+    </div>
+    <div class="stream-source-hud hidden" id="src-hud-${slot}">
+      <div class="src-hud-header">
+        <span class="src-hud-badge">● LIVE STREAM SOURCE</span>
+        <button class="src-hud-close" onclick="dismissSourceHud(${slot}, event)">✕</button>
+      </div>
+      <div class="src-hud-loc">${escapeHtml(feed.loc)}</div>
+      <div class="src-hud-meta">${escapeHtml(feed.tag)} • ${escapeHtml(feed.st || feed.co || '')} • ${feed.lat ? feed.lat.toFixed(4) + '°' : ''}, ${feed.lon ? feed.lon.toFixed(4) + '°' : ''}</div>
+      <div class="src-hud-url-box">
+        <div class="src-hud-label">ORIGINAL STREAM SOURCE:</div>
+        <a class="src-hud-link" href="${sourceUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+          🔗 ${escapeHtml(sourceUrl)} ↗
+        </a>
+      </div>
+      <div class="src-hud-actions">
+        <a class="src-hud-btn primary" href="${sourceUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+          ↗ OPEN ORIGINAL STREAM (${escapeHtml(sourceLabel)})
+        </a>
+        <button class="src-hud-btn" onclick="copySourceToClipboard('${escapeHtml(sourceUrl)}', this, event)">📋 COPY LINK</button>
+        <button class="src-hud-btn dismiss" onclick="dismissSourceHud(${slot}, event)">✕ CLOSE</button>
+      </div>
+    </div>`;
   
   el.querySelector("[data-reroll]").onclick = e => { e.stopPropagation(); rerollOne(slot); };
+  const srcBtn = el.querySelector("[data-source]");
+  if (srcBtn) srcBtn.onclick = e => { e.stopPropagation(); toggleSourceHud(slot); };
   const catcher = document.getElementById(`catcher-${slot}`);
-  if (catcher) catcher.onclick = e => { e.stopPropagation(); selectAudio(slot); };
+  if (catcher) catcher.onclick = e => {
+    e.stopPropagation();
+    selectAudio(slot);
+    showSourceHud(slot);
+  };
   updateAudioBadges();
 
   const ok = () => { autoFails[slot] = 0; const t = document.getElementById(`tuning-${slot}`); if (t) t.classList.add("hidden"); };
@@ -7725,7 +7908,7 @@ function mount(slot, feed) {
     const video = document.getElementById(holderId);
     video.muted = true;
     video.style.cursor = "pointer";
-    video.onclick = e => { e.preventDefault(); e.stopPropagation(); selectAudio(slot); };
+    video.onclick = e => { e.preventDefault(); e.stopPropagation(); selectAudio(slot); showSourceHud(slot); };
     if (window.Hls && Hls.isSupported()) {
       const h = new Hls({ maxBufferLength: 20 });
       hlsObjs[slot] = h;
@@ -8132,6 +8315,20 @@ function addFeedMarkerToMap(f, i, isNew = false) {
       <div class="pop-meta">${escapeHtml(f.tag)} • ${escapeHtml(f.st || f.co)}</div>
       <div class="pop-coords">LAT: ${f.lat.toFixed(4)}° / LON: ${f.lon.toFixed(4)}°</div>
       <div class="pop-status" style="color:var(--green);font-size:10px;margin-top:4px">● STATUS: VERIFIED LIVE // GOD'S EYE UPLINK</div>
+      <div class="pop-source-box">
+        <div style="font-size:9px; color:#8ba58b; font-weight:bold; letter-spacing:1px; margin-bottom:3px;">● ORIGINAL STREAM SOURCE:</div>
+        <a class="pop-source-url" href="${getFeedSourceUrl(f)}" target="_blank" rel="noopener noreferrer">
+          🔗 ${escapeHtml(getFeedSourceUrl(f))} ↗
+        </a>
+        <div class="pop-source-actions">
+          <a class="pop-source-btn" href="${getFeedSourceUrl(f)}" target="_blank" rel="noopener noreferrer">
+            OPEN ORIGINAL STREAM (${escapeHtml(getFeedSourceLabel(f))}) ↗
+          </a>
+          <button class="pop-source-copy" onclick="navigator.clipboard.writeText('${escapeHtml(getFeedSourceUrl(f))}'); this.textContent='✓ COPIED'; setTimeout(()=>this.textContent='📋 COPY', 1500);">
+            📋 COPY
+          </button>
+        </div>
+      </div>
       <div class="pop-btns">
         <button onclick="tuneFromMap(0, ${i}, this)">TUNE CAM 1</button>
         <button onclick="tuneFromMap(1, ${i}, this)">TUNE CAM 2</button>
@@ -8404,7 +8601,7 @@ function execSpyCommand(raw) {
 
   if (cmd === "help") {
     termLog("<b>CLASSIFIED SURVEILLANCE DIRECTIVES:</b>");
-    termLog("  <b>locate &lt;city/country&gt;</b> - Search 6,599 global feeds across 52 countries and tune CAM 1");
+    termLog("  <b>locate &lt;city/country&gt;</b> - Search 6,591 global feeds across 52 countries and tune CAM 1");
     termLog("  <b>tune &lt;1-4&gt; &lt;query&gt;</b>   - Target specific CAM slot with query");
     termLog("  <b>defcon &lt;1-5&gt;</b>         - Adjust global threat level");
     termLog("  <b>theme &lt;green|amber|cyan|crimson&gt;</b> - Switch CRT phosphor color");
@@ -8414,6 +8611,7 @@ function execSpyCommand(raw) {
     termLog("  <b>lockdown</b>                - Engage DEFCON 1 emergency protocol");
     termLog("  <b>status</b>                  - Display grid nodes & satellite telemetry");
     termLog("  <b>godseye</b>                 - Display God's Eye satellite recon telemetry");
+    termLog("  <b>source &lt;1-4&gt;</b>         - Inspect stream source URL & provider uplink");
     termLog("  <b>godseye scan</b>            - Force immediate worldwide stream acquisition burst");
     termLog("  <b>clear</b>                   - Clear terminal display");
   } else if (cmd === "locate" || cmd === "find") {
@@ -8442,6 +8640,19 @@ function execSpyCommand(raw) {
     } else {
       termLog(`ERR: NO GRID NODES MATCHING "${q}"`, "#ff4444");
     }
+  } else if (cmd === "source" || cmd === "url" || cmd === "uplink") {
+    const slotNum = parseInt(arg1, 10);
+    if (isNaN(slotNum) || slotNum < 1 || slotNum > 4) {
+      termLog("ERR: SPECIFY CAM SLOT 1-4 (e.g. 'source 1')", "#ff4444");
+      return;
+    }
+    const f = current[slotNum - 1];
+    if (!f) { termLog(`CAM 0${slotNum} OFFLINE`, "#ff4444"); return; }
+    const url = getFeedSourceUrl(f);
+    termLog(`[SOURCE UPLINK] CAM 0${slotNum}: ${f.loc}`);
+    termLog(`  PROVIDER: ${getFeedSourceLabel(f)}`);
+    termLog(`  URL: <a href="${url}" target="_blank" style="color:var(--theme-color);text-decoration:underline;">${url}</a>`);
+    showSourceHud(slotNum - 1);
   } else if (cmd === "defcon") {
     const lvl = parseInt(arg1, 10);
     if (lvl >= 1 && lvl <= 5) {
@@ -8588,7 +8799,7 @@ document.querySelectorAll("button").forEach(b => {
 // Periodic Wiretap Intercept Messages
 const SPY_INTERCEPTS = [
   "SIGINT CARRIER // KH-11 TRANSMITTING OVER BALTIC BASIN // 256-BIT SYNC ESTABLISHED",
-  "DEFENSE GRID // 6,599 NODES REPORTING OPTIMAL TELEMETRY ACROSS 51 COUNTRIES",
+  "DEFENSE GRID // 6,591 NODES REPORTING OPTIMAL TELEMETRY ACROSS 51 COUNTRIES",
   "FACIAL BIOMETRICS // PASSENGER TERMINAL LONDON HEATHROW // CONFIDENCE 96.8% (CLEARED)",
   "USA-224 ORBITAL PASS // NORTHERN HEMISPHERE RADAR SWEEP ACTIVE // ZERO ANOMALIES",
   "MICROWAVE LINK // ADRIATIC RELAY STATION DEPLOYED // PACKET ROUTING NOMINAL",
