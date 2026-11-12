@@ -539,67 +539,35 @@
   #mapSearch:focus { box-shadow: 0 0 10px var(--theme-glow); }
   #camMap { flex: 1; width: 100%; height: 100%; background: #050705; position: relative; overflow: hidden; }
 
-  /* Authentic Circular Radar HUD Overlay */
+  /* Authentic CRT Plan Position Indicator (PPI) Radar Canvas & Scope Overlay */
   .map-radar-hud {
-    position: absolute; inset: 0; pointer-events: none; z-index: 500;
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden; opacity: 0.82; transition: opacity 0.3s;
+    position: absolute; inset: 0; pointer-events: none; z-index: 550;
+    overflow: hidden; opacity: 1; transition: opacity 0.3s;
   }
   .map-radar-hud.hidden { display: none !important; }
-  .radar-scope-circle {
-    position: relative;
-    width: min(84vw, 84vh); height: min(84vw, 84vh);
-    border-radius: 50%;
-    border: 1.5px solid var(--theme-color);
-    box-shadow: 0 0 25px var(--theme-glow), inset 0 0 45px var(--theme-dim);
+  .radar-canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
     pointer-events: none;
   }
-  .radar-ring {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    border: 1px dashed var(--theme-border);
-    opacity: 0.5; pointer-events: none;
+  .radar-telemetry {
+    position: absolute; z-index: 551; pointer-events: none;
+    font-family: inherit; font-size: 10px; letter-spacing: 1px;
+    background: rgba(3, 10, 3, 0.82); border: 1px solid var(--theme-border);
+    padding: 6px 10px; line-height: 1.45; text-shadow: 0 0 5px var(--theme-glow);
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.75);
   }
-  .ring-1 { width: 25%; height: 25%; }
-  .ring-2 { width: 50%; height: 50%; }
-  .ring-3 { width: 75%; height: 75%; }
-  .ring-4 { width: 100%; height: 100%; border: 1.5px solid var(--theme-color); opacity: 0.85; }
-  .ring-label {
-    position: absolute; top: 3px; left: 50%; transform: translateX(-50%);
-    font-size: 9px; color: var(--theme-color); letter-spacing: 1px; opacity: 0.8;
+  .radar-telemetry.tl { top: 12px; left: 14px; }
+  .radar-telemetry.tr { top: 12px; right: 14px; text-align: right; }
+  .radar-telemetry.bl { bottom: 14px; left: 14px; }
+  .radar-telemetry.br { bottom: 14px; right: 14px; text-align: right; }
+  .radar-tel-title {
+    color: var(--accent); font-weight: bold; font-size: 10px; letter-spacing: 1.5px;
+    border-bottom: 1px solid var(--theme-border); padding-bottom: 3px; margin-bottom: 4px;
   }
-  .radar-axis {
-    position: absolute; background: var(--theme-border); opacity: 0.45; pointer-events: none;
-  }
-  .axis-h { top: 50%; left: 0; right: 0; height: 1px; transform: translateY(-50%); }
-  .axis-v { left: 50%; top: 0; bottom: 0; width: 1px; transform: translateX(-50%); }
-  .radar-heading {
-    position: absolute; font-size: 10px; color: var(--theme-color);
-    letter-spacing: 1.5px; font-weight: bold; text-shadow: 0 0 6px var(--theme-glow);
-  }
-  .heading-n { top: 7px; left: 50%; transform: translateX(-50%); }
-  .heading-s { bottom: 7px; left: 50%; transform: translateX(-50%); }
-  .heading-e { right: 7px; top: 50%; transform: translateY(-50%); }
-  .heading-w { left: 7px; top: 50%; transform: translateY(-50%); }
-  .radar-sweep-beam {
-    position: absolute; inset: 0; border-radius: 50%;
-    background: conic-gradient(from 0deg, var(--theme-glow) 0deg, rgba(0, 0, 0, 0) 40deg, rgba(0, 0, 0, 0) 360deg);
-    animation: radarSweep 6s linear infinite; pointer-events: none;
-  }
-  .radar-sweep-beam::after {
-    content: ""; position: absolute; top: 0; left: 50%; width: 50%; height: 2px;
-    background: linear-gradient(to right, var(--theme-color), #ffffff);
-    transform-origin: 0 0; box-shadow: 0 0 10px var(--theme-color);
-  }
-  @keyframes radarSweep {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-  .radar-center-blip {
-    position: absolute; top: 50%; left: 50%; width: 6px; height: 6px;
-    background: var(--theme-color); border-radius: 50%;
-    transform: translate(-50%, -50%); box-shadow: 0 0 10px var(--theme-glow);
+  .radar-tel-key { color: #8ba58b; font-weight: normal; }
+  @media (max-width: 900px) {
+    .radar-telemetry.bl, .radar-telemetry.br { display: none; }
+    .radar-telemetry { font-size: 8px; padding: 4px 6px; }
   }
 
   .map-notice {
@@ -754,25 +722,38 @@
     <div class="map-controls">
       <input type="text" id="mapSearch" placeholder="SEARCH COUNTRY / STATE / CITY (e.g. China, Russia, Antarctica, Texas)..." />
       <button id="toggleRadarBtn" class="secondary" onclick="toggleRadarHud()" title="Toggle tactical radar overlay" style="padding:7px 12px;font-size:12px;letter-spacing:1px">📡 RADAR: ON</button>
+      <button id="radarRpmBtn" class="secondary" onclick="cycleRadarRpm()" title="Adjust radar sweep RPM" style="padding:7px 12px;font-size:12px;letter-spacing:1px">🔄 12 RPM</button>
+      <button id="radarPingBtn" class="secondary" onclick="toggleRadarAudio()" title="Toggle radar sonar ping on North pass" style="padding:7px 12px;font-size:12px;letter-spacing:1px">🔊 PING: ON</button>
       <button id="closeMap" class="secondary" onclick="closeMapModal()" title="Return to quad camera grid (ESC)" style="background:#2a1111;color:#ff5555;border:1px solid #ff4444;font-weight:bold;cursor:pointer;padding:8px 16px;letter-spacing:1px">✕ CLOSE MAP (ESC)</button>
     </div>
   </div>
   <div id="mapNotice" class="map-notice"></div>
   <div id="camMap">
     <div id="mapRadarHud" class="map-radar-hud">
-      <div class="radar-scope-circle">
-        <div class="radar-ring ring-1"><span class="ring-label">1,000 KM</span></div>
-        <div class="radar-ring ring-2"><span class="ring-label">2,500 KM</span></div>
-        <div class="radar-ring ring-3"><span class="ring-label">5,000 KM</span></div>
-        <div class="radar-ring ring-4"><span class="ring-label">GLOBAL RANGE</span></div>
-        <div class="radar-axis axis-h"></div>
-        <div class="radar-axis axis-v"></div>
-        <div class="radar-heading heading-n">000° N</div>
-        <div class="radar-heading heading-e">090° E</div>
-        <div class="radar-heading heading-s">180° S</div>
-        <div class="radar-heading heading-w">270° W</div>
-        <div class="radar-sweep-beam"></div>
-        <div class="radar-center-blip"></div>
+      <canvas id="radarCanvas" class="radar-canvas"></canvas>
+      <div class="radar-telemetry tl">
+        <div class="radar-tel-title">AN/FPS-117 3D AIR SURVEILLANCE</div>
+        <div class="radar-tel-row"><span class="radar-tel-key">MODE:</span> 360° CONTINUOUS PPI SCAN</div>
+        <div class="radar-tel-row"><span class="radar-tel-key">BAND:</span> L-BAND 1.3 GHz // PRF: 1,200 PPS</div>
+        <div class="radar-tel-row"><span class="radar-tel-key">STALO:</span> PHASE-LOCKED // MTI ACTIVE</div>
+      </div>
+      <div class="radar-telemetry tr">
+        <div class="radar-tel-title">ANTENNA AZIMUTH & TRACKING</div>
+        <div class="radar-tel-row" id="telAzimuth"><span class="radar-tel-key">BEARING:</span> 000.0° TRUE (12.0 RPM)</div>
+        <div class="radar-tel-row" id="telRange"><span class="radar-tel-key">RANGE:</span> 2,500 KM // GATE 4</div>
+        <div class="radar-tel-row"><span class="radar-tel-key">CORRELATION:</span> 6,591 LIVE TRACKS</div>
+      </div>
+      <div class="radar-telemetry bl">
+        <div class="radar-tel-title">SIGNAL PROCESSING & CLUTTER</div>
+        <div class="radar-tel-row"><span class="radar-tel-key">CFAR:</span> CELL-AVERAGING ACTIVE [98.2%]</div>
+        <div class="radar-tel-row"><span class="radar-tel-key">DOPPLER:</span> NOTCH ±15 KTS // BLIND: OFF</div>
+        <div class="radar-tel-row"><span class="radar-tel-key">ANTENNA:</span> PHASED ARRAY // BEAM 1.1°</div>
+      </div>
+      <div class="radar-telemetry br">
+        <div class="radar-tel-title">GLOBAL GRID TELEMETRY</div>
+        <div class="radar-tel-row" id="telCoords"><span class="radar-tel-key">ORIGIN:</span> 38.5000°N / 95.0000°W</div>
+        <div class="radar-tel-row"><span class="radar-tel-key">DATUM:</span> WGS-84 // MERCATOR GRID</div>
+        <div class="radar-tel-row"><span class="radar-tel-key">ECHO RETENTION:</span> PHOSPHOR P7 DECAY</div>
       </div>
     </div>
   </div>
@@ -8195,9 +8176,57 @@ window.tuneFromMap = function(slot, poolIdx, btnEl) {
 };
 
 
-// ================= Tactical Radar HUD Controller =================
+// ================= Authentic CRT PPI Canvas Radar Engine =================
 let radarHudActive = true;
-let radarAzimuthAngle = 0;
+let radarSweepAngle = 0; // radians, 0 = 12 o'clock (North)
+let radarRpm = 12; // 6, 12, or 24 RPM
+let radarAudioEnabled = true;
+let radarAnimFrame = null;
+let lastSweepTime = 0;
+
+function playRadarPing() {
+  if (!sfxEnabled || !radarAudioEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(1240, now);
+    osc.frequency.exponentialRampToValueAtTime(620, now + 0.45);
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.45);
+  } catch (e) {}
+}
+
+function cycleRadarRpm() {
+  playSfx('beep');
+  if (radarRpm === 6) radarRpm = 12;
+  else if (radarRpm === 12) radarRpm = 24;
+  else radarRpm = 6;
+  const btn = document.getElementById("radarRpmBtn");
+  if (btn) btn.textContent = `🔄 ${radarRpm} RPM`;
+  const azEl = document.getElementById("radarAzimuthDisplay");
+  if (azEl) {
+    const deg = Math.round((radarSweepAngle * 180 / Math.PI) % 360);
+    azEl.textContent = `AZIMUTH: ${String(deg).padStart(3, '0')}° // ${radarRpm} RPM`;
+  }
+}
+
+function toggleRadarAudio() {
+  playSfx('beep');
+  radarAudioEnabled = !radarAudioEnabled;
+  const btn = document.getElementById("radarPingBtn");
+  if (btn) {
+    btn.textContent = radarAudioEnabled ? "🔊 PING: ON" : "🔇 PING: OFF";
+    btn.style.color = radarAudioEnabled ? "var(--theme-color)" : "#888";
+  }
+}
 
 function toggleRadarHud() {
   playSfx('relay');
@@ -8209,15 +8238,431 @@ function toggleRadarHud() {
     btn.textContent = radarHudActive ? "📡 RADAR: ON" : "📡 RADAR: OFF";
     btn.style.borderColor = radarHudActive ? "var(--theme-color)" : "#666";
   }
+  if (radarHudActive) startRadarCanvas();
+  else stopRadarCanvas();
 }
 
-// Live Radar Azimuth Telemetry
-setInterval(() => {
-  if (!radarHudActive) return;
-  radarAzimuthAngle = (radarAzimuthAngle + 6) % 360;
+function getRadarThemeColors() {
+  const root = document.documentElement;
+  const style = getComputedStyle(root);
+  const themeColor = style.getPropertyValue('--theme-color').trim() || '#00ff66';
+  const themeGlow = style.getPropertyValue('--theme-glow').trim() || 'rgba(0, 255, 102, 0.4)';
+  const themeBorder = style.getPropertyValue('--theme-border').trim() || '#1a331a';
+  return { themeColor, themeGlow, themeBorder };
+}
+
+function getRadarRangeLabels() {
+  if (!mapInstance) return ["1,000 KM", "2,500 KM", "5,000 KM", "GLOBAL"];
+  const z = mapInstance.getZoom();
+  if (z <= 3) return ["2,500 KM", "5,000 KM", "10,000 KM", "GLOBAL"];
+  if (z <= 5) return ["625 KM", "1,250 KM", "2,500 KM", "5,000 KM"];
+  if (z <= 7) return ["150 KM", "300 KM", "600 KM", "1,200 KM"];
+  if (z <= 9) return ["40 KM", "80 KM", "160 KM", "320 KM"];
+  if (z <= 11) return ["10 KM", "25 KM", "50 KM", "100 KM"];
+  if (z <= 13) return ["3 KM", "6 KM", "12 KM", "25 KM"];
+  return ["500 M", "1 KM", "2.5 KM", "5 KM"];
+}
+
+function updateRadarTelemetry(sweepAngle, R) {
+  const deg = (sweepAngle * 180 / Math.PI) % 360;
   const azEl = document.getElementById("radarAzimuthDisplay");
-  if (azEl) azEl.textContent = `AZIMUTH: ${String(radarAzimuthAngle).padStart(3, '0')}° // 10 RPM`;
-}, 100);
+  if (azEl) {
+    azEl.textContent = `AZIMUTH: ${deg.toFixed(1).padStart(5, '0')}° // ${radarRpm} RPM`;
+  }
+  const telAz = document.getElementById("telAzimuth");
+  if (telAz) {
+    telAz.innerHTML = `<span class="radar-tel-key">BEARING:</span> ${deg.toFixed(1).padStart(5, '0')}° TRUE (${radarRpm.toFixed(1)} RPM)`;
+  }
+  const telRange = document.getElementById("telRange");
+  if (telRange) {
+    const labels = getRadarRangeLabels();
+    telRange.innerHTML = `<span class="radar-tel-key">RANGE:</span> ${labels[2]} // GATE 4`;
+  }
+  if (mapInstance) {
+    const center = mapInstance.getCenter();
+    const latStr = `${Math.abs(center.lat).toFixed(4)}°${center.lat >= 0 ? 'N' : 'S'}`;
+    const lonStr = `${Math.abs(center.lng).toFixed(4)}°${center.lng >= 0 ? 'E' : 'W'}`;
+    const rc = document.getElementById("radarCoords");
+    if (rc) rc.textContent = `TARGET: ${latStr} / ${lonStr}`;
+    const telCoords = document.getElementById("telCoords");
+    if (telCoords) telCoords.innerHTML = `<span class="radar-tel-key">ORIGIN:</span> ${latStr} / ${lonStr}`;
+  }
+}
+
+function renderTargetBlips(ctx, cx, cy, maxR, sweepAngle, themeColor) {
+  if (!mapInstance) return;
+  const bounds = mapInstance.getBounds();
+  
+  for (let i = 0; i < POOL.length; i++) {
+    const f = POOL[i];
+    if (f.online === false || f.lat == null || f.lon == null) continue;
+    if (f.lat < bounds.getSouth() || f.lat > bounds.getNorth() || f.lon < bounds.getWest() || f.lon > bounds.getEast()) {
+      f._glow = 0;
+      continue;
+    }
+
+    const pt = mapInstance.latLngToContainerPoint([f.lat, f.lon]);
+    const dx = pt.x - cx;
+    const dy = pt.y - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > maxR) {
+      f._glow = 0;
+      continue;
+    }
+
+    // Target angle from North (clockwise)
+    let targetAngle = Math.atan2(dx, -dy);
+    if (targetAngle < 0) targetAngle += 2 * Math.PI;
+
+    // Angular difference behind the sweep
+    let diff = (sweepAngle - targetAngle + 2 * Math.PI) % (2 * Math.PI);
+    if (diff <= 0.08) {
+      f._glow = 1.0; // Excited by radar pulse!
+    }
+
+    if (f._glow && f._glow > 0.02) {
+      const g = f._glow;
+      ctx.save();
+      // Glowing phosphor aura
+      ctx.fillStyle = `rgba(0, 255, 102, ${(g * 0.45).toFixed(3)})`;
+      ctx.shadowColor = themeColor;
+      ctx.shadowBlur = 9 * g;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 3 + 5 * g, 0, Math.PI * 2);
+      ctx.fill();
+
+      // White-hot core blip
+      ctx.fillStyle = `rgba(255, 255, 255, ${g.toFixed(2)})`;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tactical Target Acquisition Reticle on fresh excitation
+      if (g > 0.6) {
+        ctx.strokeStyle = `rgba(0, 255, 102, ${(g * 0.85).toFixed(2)})`;
+        ctx.lineWidth = 1;
+        const b = 6;
+        ctx.beginPath();
+        // Top-left
+        ctx.moveTo(pt.x - b, pt.y - b + 3); ctx.lineTo(pt.x - b, pt.y - b); ctx.lineTo(pt.x - b + 3, pt.y - b);
+        // Top-right
+        ctx.moveTo(pt.x + b - 3, pt.y - b); ctx.lineTo(pt.x + b, pt.y - b); ctx.lineTo(pt.x + b, pt.y - b + 3);
+        // Bottom-left
+        ctx.moveTo(pt.x - b, pt.y + b - 3); ctx.lineTo(pt.x - b, pt.y + b); ctx.lineTo(pt.x - b + 3, pt.y + b);
+        // Bottom-right
+        ctx.moveTo(pt.x + b - 3, pt.y + b); ctx.lineTo(pt.x + b, pt.y + b); ctx.lineTo(pt.x + b, pt.y + b - 3);
+        ctx.stroke();
+
+        ctx.fillStyle = `rgba(0, 255, 102, ${(g * 0.9).toFixed(2)})`;
+        ctx.font = "bold 8px monospace";
+        ctx.fillText(f.ty ? f.ty.slice(0, 4) : "TGT", pt.x + b + 2, pt.y + 3);
+      }
+      ctx.restore();
+
+      f._glow *= 0.962; // Phosphor decay
+    }
+  }
+}
+
+function renderRadarFrame(timestamp) {
+  if (!radarHudActive) {
+    radarAnimFrame = requestAnimationFrame(renderRadarFrame);
+    return;
+  }
+  const modal = document.getElementById("mapModal");
+  if (!modal || modal.classList.contains("hidden")) {
+    radarAnimFrame = null;
+    return;
+  }
+
+  const canvas = document.getElementById("radarCanvas");
+  const container = document.getElementById("camMap");
+  if (!canvas || !container) {
+    radarAnimFrame = requestAnimationFrame(renderRadarFrame);
+    return;
+  }
+
+  if (!lastSweepTime) lastSweepTime = timestamp;
+  const dt = Math.min((timestamp - lastSweepTime) / 1000, 0.1);
+  lastSweepTime = timestamp;
+
+  // Advance sweep angle clockwise
+  const dAngle = (radarRpm * 2 * Math.PI / 60) * dt;
+  const prevAngle = radarSweepAngle;
+  radarSweepAngle = (radarSweepAngle + dAngle) % (2 * Math.PI);
+
+  if (prevAngle > radarSweepAngle && radarAudioEnabled) {
+    playRadarPing();
+  }
+
+  const rect = container.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const targetW = Math.round(rect.width * dpr);
+  const targetH = Math.round(rect.height * dpr);
+  if (canvas.width !== targetW || canvas.height !== targetH) {
+    canvas.width = targetW;
+    canvas.height = targetH;
+  }
+
+  const ctx = canvas.getContext("2d");
+  ctx.save();
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+
+  const cx = rect.width / 2;
+  const cy = rect.height / 2;
+  const R = Math.min(rect.width, rect.height) * 0.44;
+
+  if (R < 20) {
+    ctx.restore();
+    radarAnimFrame = requestAnimationFrame(renderRadarFrame);
+    return;
+  }
+
+  const { themeColor, themeGlow, themeBorder } = getRadarThemeColors();
+
+  // 1. Darken CRT area outside radar scope
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, rect.width, rect.height);
+  ctx.arc(cx, cy, R, 0, Math.PI * 2, true);
+  ctx.fillStyle = "rgba(1, 6, 2, 0.35)";
+  ctx.fill();
+  ctx.restore();
+
+  // 2. Phosphor Glass Ambient Gradient
+  const glassGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+  glassGrad.addColorStop(0, "rgba(0, 255, 102, 0.035)");
+  glassGrad.addColorStop(0.7, "rgba(0, 255, 102, 0.012)");
+  glassGrad.addColorStop(1, "rgba(0, 0, 0, 0.22)");
+  ctx.fillStyle = glassGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 3. Radial Bearing Lines (every 30°)
+  ctx.save();
+  ctx.strokeStyle = themeBorder;
+  ctx.lineWidth = 0.8;
+  ctx.setLineDash([2, 5]);
+  for (let a = 0; a < 360; a += 30) {
+    const rad = (a - 90) * Math.PI / 180;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + (R - 16) * Math.cos(rad), cy + (R - 16) * Math.sin(rad));
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // 4. Concentric Range Rings (4 rings)
+  const ringDistances = getRadarRangeLabels();
+  ctx.save();
+  ctx.strokeStyle = themeBorder;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  for (let rIdx = 1; rIdx <= 4; rIdx++) {
+    const ringR = (R - 16) * (rIdx / 4);
+    ctx.beginPath();
+    ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Range distance label
+    if (ringDistances[rIdx - 1]) {
+      const labelAngle = -Math.PI / 4; // 45 degrees
+      const lx = cx + ringR * Math.cos(labelAngle);
+      const ly = cy + ringR * Math.sin(labelAngle);
+      ctx.save();
+      ctx.fillStyle = "rgba(2, 8, 2, 0.88)";
+      ctx.fillRect(lx - 25, ly - 7, 50, 14);
+      ctx.strokeStyle = themeBorder;
+      ctx.strokeRect(lx - 25, ly - 7, 50, 14);
+      ctx.fillStyle = themeColor;
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(ringDistances[rIdx - 1], lx, ly);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+
+  // 5. Crosshair Axes with Range Graduation Hashes
+  ctx.save();
+  ctx.strokeStyle = themeColor;
+  ctx.lineWidth = 0.8;
+  ctx.globalAlpha = 0.45;
+  ctx.beginPath();
+  ctx.moveTo(cx - (R - 16), cy); ctx.lineTo(cx + (R - 16), cy);
+  ctx.moveTo(cx, cy - (R - 16)); ctx.lineTo(cx, cy + (R - 16));
+  ctx.stroke();
+
+  for (let f = 0.1; f < 1.0; f += 0.05) {
+    const d = (R - 16) * f;
+    const tickLen = (Math.round(f * 100) % 25 === 0) ? 6 : 3;
+    ctx.beginPath();
+    ctx.moveTo(cx + d, cy - tickLen); ctx.lineTo(cx + d, cy + tickLen);
+    ctx.moveTo(cx - d, cy - tickLen); ctx.lineTo(cx - d, cy + tickLen);
+    ctx.moveTo(cx - tickLen, cy + d); ctx.lineTo(cx + tickLen, cy + d);
+    ctx.moveTo(cx - tickLen, cy - d); ctx.lineTo(cx + tickLen, cy - d);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // 6. Outer Bezel & 360° Azimuth Graduation Marks
+  ctx.save();
+  ctx.strokeStyle = themeColor;
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = themeColor;
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.shadowBlur = 0;
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = themeBorder;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R - 16, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.font = "bold 9px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  for (let deg = 0; deg < 360; deg++) {
+    const rad = (deg - 90) * Math.PI / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+
+    if (deg % 30 === 0) {
+      ctx.strokeStyle = (deg === 0) ? "#ff3344" : themeColor;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(cx + R * cos, cy + R * sin);
+      ctx.lineTo(cx + (R - 14) * cos, cy + (R - 14) * sin);
+      ctx.stroke();
+
+      const tx = cx + (R - 26) * cos;
+      const ty = cy + (R - 26) * sin;
+      ctx.fillStyle = (deg === 0) ? "#ff4455" : themeColor;
+      const cardinal = deg === 0 ? "000° N" : deg === 90 ? "090° E" : deg === 180 ? "180° S" : deg === 270 ? "270° W" : `${String(deg).padStart(3, '0')}°`;
+      ctx.fillText(cardinal, tx, ty);
+    } else if (deg % 10 === 0) {
+      ctx.strokeStyle = themeColor;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(cx + R * cos, cy + R * sin);
+      ctx.lineTo(cx + (R - 10) * cos, cy + (R - 10) * sin);
+      ctx.stroke();
+    } else if (deg % 5 === 0) {
+      ctx.strokeStyle = themeBorder;
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(cx + R * cos, cy + R * sin);
+      ctx.lineTo(cx + (R - 7) * cos, cy + (R - 7) * sin);
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = themeBorder;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(cx + R * cos, cy + R * sin);
+      ctx.lineTo(cx + (R - 4) * cos, cy + (R - 4) * sin);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+
+  // 7. Phosphor Persistence Sweep Trail (Exponential Decay Fan)
+  const trailSlices = 36;
+  const trailAngle = (55 * Math.PI) / 180;
+  ctx.save();
+  for (let i = 0; i < trailSlices; i++) {
+    const a1 = radarSweepAngle - trailAngle * ((trailSlices - i) / trailSlices);
+    const a2 = radarSweepAngle - trailAngle * ((trailSlices - i - 1) / trailSlices);
+    const t = i / (trailSlices - 1);
+    const alpha = Math.pow(t, 2.4) * 0.32;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R - 16, a1 - Math.PI / 2, a2 - Math.PI / 2);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(0, 255, 102, ${alpha.toFixed(3)})`;
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // 8. The Leading Radar Sweep Beam
+  const beamAngleMath = radarSweepAngle - Math.PI / 2;
+  const tipX = cx + (R - 16) * Math.cos(beamAngleMath);
+  const tipY = cy + (R - 16) * Math.sin(beamAngleMath);
+
+  ctx.save();
+  ctx.strokeStyle = themeColor;
+  ctx.lineWidth = 3.5;
+  ctx.shadowColor = themeColor;
+  ctx.shadowBlur = 14;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(tipX, tipY);
+  ctx.stroke();
+
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1.2;
+  ctx.shadowBlur = 4;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(tipX, tipY);
+  ctx.stroke();
+
+  // Tip flare
+  ctx.fillStyle = "#ffffff";
+  ctx.shadowColor = "#ffffff";
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.arc(tipX, tipY, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // 9. Target Echo Illumination
+  renderTargetBlips(ctx, cx, cy, R - 18, radarSweepAngle, themeColor);
+
+  // 10. Center Reticle & Antenna Beacon
+  ctx.save();
+  ctx.strokeStyle = themeColor;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+  ctx.setLineDash([2, 3]);
+  ctx.stroke();
+
+  ctx.fillStyle = themeColor;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+
+  updateRadarTelemetry(radarSweepAngle, R);
+
+  radarAnimFrame = requestAnimationFrame(renderRadarFrame);
+}
+
+function startRadarCanvas() {
+  if (radarAnimFrame) return;
+  lastSweepTime = performance.now();
+  radarAnimFrame = requestAnimationFrame(renderRadarFrame);
+}
+
+function stopRadarCanvas() {
+  if (radarAnimFrame) {
+    cancelAnimationFrame(radarAnimFrame);
+    radarAnimFrame = null;
+  }
+}
 
 
 // ==================== GOD'S EYE PLANETARY SURVEILLANCE ENGINE ====================
@@ -8549,6 +8994,7 @@ function openMapModal() {
   if (!m) return;
   m.classList.remove("hidden");
   initMap();
+  startRadarCanvas();
   setTimeout(() => {
     if (mapInstance) mapInstance.invalidateSize();
     const sInput = document.getElementById("mapSearch");
@@ -8560,6 +9006,7 @@ function closeMapModal() {
   playSfx("relay");
   const m = document.getElementById("mapModal");
   if (m) m.classList.add("hidden");
+  stopRadarCanvas();
   for (let s = 0; s < 4; s++) {
     const v = document.querySelector(`#cam${s} video`);
     if (v && v.paused) v.play().catch(() => {});
