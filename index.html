@@ -6959,12 +6959,29 @@ function initMap() {
     preferCanvas: true
   });
 
-  // CartoDB Dark Matter tiles
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    subdomains: "abcd",
-    maxZoom: 19
-  }).addTo(mapInstance);
+  // Esri ArcGIS Online Tiles - 100% free, no API key required
+  const esriDark = L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>, &copy; OpenStreetMap contributors',
+    maxZoom: 16
+  });
+
+  const esriSatellite = L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics',
+    maxZoom: 18
+  });
+
+  const esriStreets = L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>, &copy; OpenStreetMap contributors',
+    maxZoom: 18
+  });
+
+  esriDark.addTo(mapInstance);
+
+  L.control.layers({
+    "Tactical Dark": esriDark,
+    "Satellite": esriSatellite,
+    "Street Map": esriStreets
+  }, null, { position: "topright" }).addTo(mapInstance);
 
   // Marker cluster group with high performance settings
   mapMarkersCluster = L.markerClusterGroup({
