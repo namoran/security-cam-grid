@@ -4,417 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SECURITY GRID — 4 Random Live Cams</title>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js">
-// ================= Interactive Radar Map =================
-let mapInstance = null;
-let mapMarkersCluster = null;
-let mapInitialized = false;
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function showMapNotice(msg) {
-  const n = document.getElementById("mapNotice");
-  if (!n) return;
-  n.textContent = msg;
-  n.style.display = "block";
-  clearTimeout(n._timer);
-  n._timer = setTimeout(() => { n.style.display = "none"; }, 2500);
-}
-
-window.tuneFromMap = function(slot, poolIdx) {
-  const feed = POOL[poolIdx];
-  if (!feed) return;
-  mount(slot, feed);
-  showMapNotice(`TUNE CONFIRMED ▸ CAM 0${slot + 1} TUNED TO: ${feed.loc}`);
-};
-
-function initMap() {
-  if (mapInitialized) return;
-  mapInitialized = true;
-
-  // Center US / Atlantic view
-  mapInstance = L.map("camMap", {
-    center: [38.5, -95.0],
-    zoom: 4,
-    minZoom: 2,
-    maxZoom: 18,
-    preferCanvas: true
-  });
-
-  // CartoDB Dark Matter tiles
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    subdomains: "abcd",
-    maxZoom: 19
-  }).addTo(mapInstance);
-
-  // Marker cluster group with high performance settings
-  mapMarkersCluster = L.markerClusterGroup({
-    maxClusterRadius: 45,
-    spiderfyOnMaxZoom: true,
-    showCoverageOnHover: false,
-    chunkedLoading: true,
-    chunkProgress: null
-  });
-
-  document.getElementById("mapCamCount").textContent = `${POOL.length.toLocaleString()} CAMERAS ONLINE`;
-
-  // Add camera markers
-  for (let i = 0; i < POOL.length; i++) {
-    const f = POOL[i];
-    if (f.lat == null || f.lon == null) continue;
-
-    const col = f.ty === 'TRAFFIC' ? '#33ff66' : (f.ty === 'URBAN' ? '#33ddff' : (f.ty === 'BEACH' ? '#00e5ff' : '#ffb000'));
-    const marker = L.circleMarker([f.lat, f.lon], {
-      radius: 5,
-      color: col,
-      fillColor: col,
-      fillOpacity: 0.85,
-      weight: 1.5
-    });
-
-    const popupHtml = `
-      <div class="cctv-popup">
-        <div class="pop-loc">${escapeHtml(f.loc)}</div>
-        <div class="pop-meta">${escapeHtml(f.tag)} • ${escapeHtml(f.st || f.co)}</div>
-        <div class="pop-coords">LAT: ${f.lat.toFixed(4)}° / LON: ${f.lon.toFixed(4)}°</div>
-        <div class="pop-btns">
-          <button onclick="tuneFromMap(0, ${i})">TUNE CAM 1</button>
-          <button onclick="tuneFromMap(1, ${i})">TUNE CAM 2</button>
-          <button onclick="tuneFromMap(2, ${i})">TUNE CAM 3</button>
-          <button onclick="tuneFromMap(3, ${i})">TUNE CAM 4</button>
-        </div>
-      </div>
-    `;
-    marker.bindPopup(popupHtml, { maxWidth: 300 });
-    mapMarkersCluster.addLayer(marker);
-  }
-
-  mapInstance.addLayer(mapMarkersCluster);
-
-  // Search functionality
-  const sInput = document.getElementById("mapSearch");
-  if (sInput) {
-    sInput.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        const query = sInput.value.trim().toUpperCase();
-        if (!query) return;
-        const matchIdx = POOL.findIndex(p => p.loc.toUpperCase().includes(query) || (p.st && p.st.toUpperCase().includes(query)) || (p.co && p.co.toUpperCase().includes(query)));
-        if (matchIdx !== -1) {
-          const match = POOL[matchIdx];
-          mapInstance.setView([match.lat, match.lon], 11, { animate: true });
-          showMapNotice(`LOCATED: ${match.loc}`);
-        } else {
-          showMapNotice(`NO CAMERAS MATCHING: "${query}"`);
-        }
-      }
-    });
-  }
-}
-
-function openMapModal() {
-  const m = document.getElementById("mapModal");
-  if (!m) return;
-  m.classList.remove("hidden");
-  initMap();
-  setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 150);
-}
-
-function closeMapModal() {
-  const m = document.getElementById("mapModal");
-  if (m) m.classList.add("hidden");
-}
-
-document.getElementById("mapBtn").onclick = openMapModal;
-document.getElementById("closeMap").onclick = closeMapModal;
-
-document.addEventListener("keydown", e => {
-  if (e.key === "Escape") closeMapModal();
-  if ((e.key === "m" || e.key === "M") && document.activeElement !== document.getElementById("mapSearch")) {
-    const modal = document.getElementById("mapModal");
-    if (modal && modal.classList.contains("hidden")) openMapModal();
-    else closeMapModal();
-  }
-});
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-// ================= Interactive Radar Map =================
-let mapInstance = null;
-let mapMarkersCluster = null;
-let mapInitialized = false;
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function showMapNotice(msg) {
-  const n = document.getElementById("mapNotice");
-  if (!n) return;
-  n.textContent = msg;
-  n.style.display = "block";
-  clearTimeout(n._timer);
-  n._timer = setTimeout(() => { n.style.display = "none"; }, 2500);
-}
-
-window.tuneFromMap = function(slot, poolIdx) {
-  const feed = POOL[poolIdx];
-  if (!feed) return;
-  mount(slot, feed);
-  showMapNotice(`TUNE CONFIRMED ▸ CAM 0${slot + 1} TUNED TO: ${feed.loc}`);
-};
-
-function initMap() {
-  if (mapInitialized) return;
-  mapInitialized = true;
-
-  // Center US / Atlantic view
-  mapInstance = L.map("camMap", {
-    center: [38.5, -95.0],
-    zoom: 4,
-    minZoom: 2,
-    maxZoom: 18,
-    preferCanvas: true
-  });
-
-  // CartoDB Dark Matter tiles
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    subdomains: "abcd",
-    maxZoom: 19
-  }).addTo(mapInstance);
-
-  // Marker cluster group with high performance settings
-  mapMarkersCluster = L.markerClusterGroup({
-    maxClusterRadius: 45,
-    spiderfyOnMaxZoom: true,
-    showCoverageOnHover: false,
-    chunkedLoading: true,
-    chunkProgress: null
-  });
-
-  document.getElementById("mapCamCount").textContent = `${POOL.length.toLocaleString()} CAMERAS ONLINE`;
-
-  // Add camera markers
-  for (let i = 0; i < POOL.length; i++) {
-    const f = POOL[i];
-    if (f.lat == null || f.lon == null) continue;
-
-    const col = f.ty === 'TRAFFIC' ? '#33ff66' : (f.ty === 'URBAN' ? '#33ddff' : (f.ty === 'BEACH' ? '#00e5ff' : '#ffb000'));
-    const marker = L.circleMarker([f.lat, f.lon], {
-      radius: 5,
-      color: col,
-      fillColor: col,
-      fillOpacity: 0.85,
-      weight: 1.5
-    });
-
-    const popupHtml = `
-      <div class="cctv-popup">
-        <div class="pop-loc">${escapeHtml(f.loc)}</div>
-        <div class="pop-meta">${escapeHtml(f.tag)} • ${escapeHtml(f.st || f.co)}</div>
-        <div class="pop-coords">LAT: ${f.lat.toFixed(4)}° / LON: ${f.lon.toFixed(4)}°</div>
-        <div class="pop-btns">
-          <button onclick="tuneFromMap(0, ${i})">TUNE CAM 1</button>
-          <button onclick="tuneFromMap(1, ${i})">TUNE CAM 2</button>
-          <button onclick="tuneFromMap(2, ${i})">TUNE CAM 3</button>
-          <button onclick="tuneFromMap(3, ${i})">TUNE CAM 4</button>
-        </div>
-      </div>
-    `;
-    marker.bindPopup(popupHtml, { maxWidth: 300 });
-    mapMarkersCluster.addLayer(marker);
-  }
-
-  mapInstance.addLayer(mapMarkersCluster);
-
-  // Search functionality
-  const sInput = document.getElementById("mapSearch");
-  if (sInput) {
-    sInput.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        const query = sInput.value.trim().toUpperCase();
-        if (!query) return;
-        const matchIdx = POOL.findIndex(p => p.loc.toUpperCase().includes(query) || (p.st && p.st.toUpperCase().includes(query)) || (p.co && p.co.toUpperCase().includes(query)));
-        if (matchIdx !== -1) {
-          const match = POOL[matchIdx];
-          mapInstance.setView([match.lat, match.lon], 11, { animate: true });
-          showMapNotice(`LOCATED: ${match.loc}`);
-        } else {
-          showMapNotice(`NO CAMERAS MATCHING: "${query}"`);
-        }
-      }
-    });
-  }
-}
-
-function openMapModal() {
-  const m = document.getElementById("mapModal");
-  if (!m) return;
-  m.classList.remove("hidden");
-  initMap();
-  setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 150);
-}
-
-function closeMapModal() {
-  const m = document.getElementById("mapModal");
-  if (m) m.classList.add("hidden");
-}
-
-document.getElementById("mapBtn").onclick = openMapModal;
-document.getElementById("closeMap").onclick = closeMapModal;
-
-document.addEventListener("keydown", e => {
-  if (e.key === "Escape") closeMapModal();
-  if ((e.key === "m" || e.key === "M") && document.activeElement !== document.getElementById("mapSearch")) {
-    const modal = document.getElementById("mapModal");
-    if (modal && modal.classList.contains("hidden")) openMapModal();
-    else closeMapModal();
-  }
-});
-
-</script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js">
-// ================= Interactive Radar Map =================
-let mapInstance = null;
-let mapMarkersCluster = null;
-let mapInitialized = false;
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function showMapNotice(msg) {
-  const n = document.getElementById("mapNotice");
-  if (!n) return;
-  n.textContent = msg;
-  n.style.display = "block";
-  clearTimeout(n._timer);
-  n._timer = setTimeout(() => { n.style.display = "none"; }, 2500);
-}
-
-window.tuneFromMap = function(slot, poolIdx) {
-  const feed = POOL[poolIdx];
-  if (!feed) return;
-  mount(slot, feed);
-  showMapNotice(`TUNE CONFIRMED ▸ CAM 0${slot + 1} TUNED TO: ${feed.loc}`);
-};
-
-function initMap() {
-  if (mapInitialized) return;
-  mapInitialized = true;
-
-  // Center US / Atlantic view
-  mapInstance = L.map("camMap", {
-    center: [38.5, -95.0],
-    zoom: 4,
-    minZoom: 2,
-    maxZoom: 18,
-    preferCanvas: true
-  });
-
-  // CartoDB Dark Matter tiles
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    subdomains: "abcd",
-    maxZoom: 19
-  }).addTo(mapInstance);
-
-  // Marker cluster group with high performance settings
-  mapMarkersCluster = L.markerClusterGroup({
-    maxClusterRadius: 45,
-    spiderfyOnMaxZoom: true,
-    showCoverageOnHover: false,
-    chunkedLoading: true,
-    chunkProgress: null
-  });
-
-  document.getElementById("mapCamCount").textContent = `${POOL.length.toLocaleString()} CAMERAS ONLINE`;
-
-  // Add camera markers
-  for (let i = 0; i < POOL.length; i++) {
-    const f = POOL[i];
-    if (f.lat == null || f.lon == null) continue;
-
-    const col = f.ty === 'TRAFFIC' ? '#33ff66' : (f.ty === 'URBAN' ? '#33ddff' : (f.ty === 'BEACH' ? '#00e5ff' : '#ffb000'));
-    const marker = L.circleMarker([f.lat, f.lon], {
-      radius: 5,
-      color: col,
-      fillColor: col,
-      fillOpacity: 0.85,
-      weight: 1.5
-    });
-
-    const popupHtml = `
-      <div class="cctv-popup">
-        <div class="pop-loc">${escapeHtml(f.loc)}</div>
-        <div class="pop-meta">${escapeHtml(f.tag)} • ${escapeHtml(f.st || f.co)}</div>
-        <div class="pop-coords">LAT: ${f.lat.toFixed(4)}° / LON: ${f.lon.toFixed(4)}°</div>
-        <div class="pop-btns">
-          <button onclick="tuneFromMap(0, ${i})">TUNE CAM 1</button>
-          <button onclick="tuneFromMap(1, ${i})">TUNE CAM 2</button>
-          <button onclick="tuneFromMap(2, ${i})">TUNE CAM 3</button>
-          <button onclick="tuneFromMap(3, ${i})">TUNE CAM 4</button>
-        </div>
-      </div>
-    `;
-    marker.bindPopup(popupHtml, { maxWidth: 300 });
-    mapMarkersCluster.addLayer(marker);
-  }
-
-  mapInstance.addLayer(mapMarkersCluster);
-
-  // Search functionality
-  const sInput = document.getElementById("mapSearch");
-  if (sInput) {
-    sInput.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        const query = sInput.value.trim().toUpperCase();
-        if (!query) return;
-        const matchIdx = POOL.findIndex(p => p.loc.toUpperCase().includes(query) || (p.st && p.st.toUpperCase().includes(query)) || (p.co && p.co.toUpperCase().includes(query)));
-        if (matchIdx !== -1) {
-          const match = POOL[matchIdx];
-          mapInstance.setView([match.lat, match.lon], 11, { animate: true });
-          showMapNotice(`LOCATED: ${match.loc}`);
-        } else {
-          showMapNotice(`NO CAMERAS MATCHING: "${query}"`);
-        }
-      }
-    });
-  }
-}
-
-function openMapModal() {
-  const m = document.getElementById("mapModal");
-  if (!m) return;
-  m.classList.remove("hidden");
-  initMap();
-  setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 150);
-}
-
-function closeMapModal() {
-  const m = document.getElementById("mapModal");
-  if (m) m.classList.add("hidden");
-}
-
-document.getElementById("mapBtn").onclick = openMapModal;
-document.getElementById("closeMap").onclick = closeMapModal;
-
-document.addEventListener("keydown", e => {
-  if (e.key === "Escape") closeMapModal();
-  if ((e.key === "m" || e.key === "M") && document.activeElement !== document.getElementById("mapSearch")) {
-    const modal = document.getElementById("mapModal");
-    if (modal && modal.classList.contains("hidden")) openMapModal();
-    else closeMapModal();
-  }
-});
-
-</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <style>
   :root { --green: #33ff66; --amber: #ffb000; --bg: #050705; }
   * { box-sizing: border-box; }
@@ -526,12 +121,12 @@ document.addEventListener("keydown", e => {
     flex-wrap: wrap; gap: 8px; }
   footer a { color: var(--green); }
 
-  /* Tactical Map Overlay & Leaflet HUD */
+  /* Tactical Radar Map & Leaflet HUD */
   .map-modal {
-    position: fixed; inset: 0; z-index: 100; background: rgba(5, 7, 5, 0.96);
+    position: fixed; inset: 0; z-index: 1000; background: rgba(5, 7, 5, 0.97);
     display: flex; flex-direction: column; backdrop-filter: blur(4px);
   }
-  .map-modal.hidden { display: none; }
+  .map-modal.hidden { display: none !important; }
   .map-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 18px; border-bottom: 2px solid #1a2b1a;
@@ -548,7 +143,7 @@ document.addEventListener("keydown", e => {
   #mapSearch {
     font-family: inherit; background: #0f1a0f; color: var(--green);
     border: 1px solid var(--green); padding: 7px 12px; font-size: 12px;
-    width: 270px; letter-spacing: 1px; outline: none;
+    width: 280px; letter-spacing: 1px; outline: none;
   }
   #mapSearch::placeholder { color: #4e6a4e; }
   #mapSearch:focus { box-shadow: 0 0 8px rgba(51,255,102,.5); }
@@ -582,7 +177,7 @@ document.addEventListener("keydown", e => {
     font-family: "Courier New", Courier, monospace !important;
   }
   .leaflet-popup-tip { background: #080d08 !important; border: 1px solid var(--green) !important; }
-  .cctv-popup { min-width: 220px; max-width: 290px; padding: 2px 0; }
+  .cctv-popup { min-width: 220px; max-width: 300px; padding: 2px 0; }
   .cctv-popup .pop-loc { font-size: 13px; font-weight: bold; color: var(--green); letter-spacing: 1px; margin-bottom: 4px; line-height: 1.3; }
   .cctv-popup .pop-meta { font-size: 11px; color: var(--amber); margin-bottom: 4px; }
   .cctv-popup .pop-coords { font-size: 10px; color: #7a8a7a; margin-bottom: 10px; letter-spacing: 1px; }
@@ -602,6 +197,7 @@ document.addEventListener("keydown", e => {
   <div class="controls">
     <div class="rec"><div class="rec-dot"></div>REC</div>
     <div id="clock" style="color:#ffb000">--:--:--</div>
+    <button id="mapBtn" class="secondary" title="Search & pick cameras from interactive radar map (Hotkey: M)" style="background:#0f2b0f;border:1px solid #33ff66;color:#33ff66;font-weight:bold;cursor:pointer;letter-spacing:1px;font-size:13px;padding:8px 14px">🗺️ MAP VIEW (M)</button>
     <button id="shuffleBtn" title="Pick 4 new random cameras">⟳ Shuffle 4 random</button>
     <button id="refreshBtn" class="secondary" title="Fetch catalogs for new streams">⟳ Refresh streams</button>
   </div>
@@ -613,6 +209,7 @@ document.addEventListener("keydown", e => {
   <label>Country <select id="fCo"><option value="">All countries</option></select></label>
   <label>State <select id="fSt"><option value="">All states</option></select></label>
   <button id="resetFilters" class="secondary" title="Clear all filters">✕ Reset</button>
+  <button id="filterMapBtn" class="secondary" title="Open Map Search (M)" style="border-color:#33ff66;color:#33ff66;cursor:pointer;padding:5px 10px;font-size:11px">🗺️ Search on Map</button>
   <span id="matchline"></span>
 </div>
 <div style="padding:0 18px"><span id="refreshline"></span></div>
@@ -629,142 +226,7 @@ document.addEventListener("keydown", e => {
   <span>SHUFFLE or per-cam ⚄ dice for new feed • <b>click a camera</b> for its audio (click again to mute)</span>
 </footer>
 
-<script src="https://www.youtube.com/iframe_api">
-// ================= Interactive Radar Map =================
-let mapInstance = null;
-let mapMarkersCluster = null;
-let mapInitialized = false;
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function showMapNotice(msg) {
-  const n = document.getElementById("mapNotice");
-  if (!n) return;
-  n.textContent = msg;
-  n.style.display = "block";
-  clearTimeout(n._timer);
-  n._timer = setTimeout(() => { n.style.display = "none"; }, 2500);
-}
-
-window.tuneFromMap = function(slot, poolIdx) {
-  const feed = POOL[poolIdx];
-  if (!feed) return;
-  mount(slot, feed);
-  showMapNotice(`TUNE CONFIRMED ▸ CAM 0${slot + 1} TUNED TO: ${feed.loc}`);
-};
-
-function initMap() {
-  if (mapInitialized) return;
-  mapInitialized = true;
-
-  // Center US / Atlantic view
-  mapInstance = L.map("camMap", {
-    center: [38.5, -95.0],
-    zoom: 4,
-    minZoom: 2,
-    maxZoom: 18,
-    preferCanvas: true
-  });
-
-  // CartoDB Dark Matter tiles
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    subdomains: "abcd",
-    maxZoom: 19
-  }).addTo(mapInstance);
-
-  // Marker cluster group with high performance settings
-  mapMarkersCluster = L.markerClusterGroup({
-    maxClusterRadius: 45,
-    spiderfyOnMaxZoom: true,
-    showCoverageOnHover: false,
-    chunkedLoading: true,
-    chunkProgress: null
-  });
-
-  document.getElementById("mapCamCount").textContent = `${POOL.length.toLocaleString()} CAMERAS ONLINE`;
-
-  // Add camera markers
-  for (let i = 0; i < POOL.length; i++) {
-    const f = POOL[i];
-    if (f.lat == null || f.lon == null) continue;
-
-    const col = f.ty === 'TRAFFIC' ? '#33ff66' : (f.ty === 'URBAN' ? '#33ddff' : (f.ty === 'BEACH' ? '#00e5ff' : '#ffb000'));
-    const marker = L.circleMarker([f.lat, f.lon], {
-      radius: 5,
-      color: col,
-      fillColor: col,
-      fillOpacity: 0.85,
-      weight: 1.5
-    });
-
-    const popupHtml = `
-      <div class="cctv-popup">
-        <div class="pop-loc">${escapeHtml(f.loc)}</div>
-        <div class="pop-meta">${escapeHtml(f.tag)} • ${escapeHtml(f.st || f.co)}</div>
-        <div class="pop-coords">LAT: ${f.lat.toFixed(4)}° / LON: ${f.lon.toFixed(4)}°</div>
-        <div class="pop-btns">
-          <button onclick="tuneFromMap(0, ${i})">TUNE CAM 1</button>
-          <button onclick="tuneFromMap(1, ${i})">TUNE CAM 2</button>
-          <button onclick="tuneFromMap(2, ${i})">TUNE CAM 3</button>
-          <button onclick="tuneFromMap(3, ${i})">TUNE CAM 4</button>
-        </div>
-      </div>
-    `;
-    marker.bindPopup(popupHtml, { maxWidth: 300 });
-    mapMarkersCluster.addLayer(marker);
-  }
-
-  mapInstance.addLayer(mapMarkersCluster);
-
-  // Search functionality
-  const sInput = document.getElementById("mapSearch");
-  if (sInput) {
-    sInput.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        const query = sInput.value.trim().toUpperCase();
-        if (!query) return;
-        const matchIdx = POOL.findIndex(p => p.loc.toUpperCase().includes(query) || (p.st && p.st.toUpperCase().includes(query)) || (p.co && p.co.toUpperCase().includes(query)));
-        if (matchIdx !== -1) {
-          const match = POOL[matchIdx];
-          mapInstance.setView([match.lat, match.lon], 11, { animate: true });
-          showMapNotice(`LOCATED: ${match.loc}`);
-        } else {
-          showMapNotice(`NO CAMERAS MATCHING: "${query}"`);
-        }
-      }
-    });
-  }
-}
-
-function openMapModal() {
-  const m = document.getElementById("mapModal");
-  if (!m) return;
-  m.classList.remove("hidden");
-  initMap();
-  setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 150);
-}
-
-function closeMapModal() {
-  const m = document.getElementById("mapModal");
-  if (m) m.classList.add("hidden");
-}
-
-document.getElementById("mapBtn").onclick = openMapModal;
-document.getElementById("closeMap").onclick = closeMapModal;
-
-document.addEventListener("keydown", e => {
-  if (e.key === "Escape") closeMapModal();
-  if ((e.key === "m" || e.key === "M") && document.activeElement !== document.getElementById("mapSearch")) {
-    const modal = document.getElementById("mapModal");
-    if (modal && modal.classList.contains("hidden")) openMapModal();
-    else closeMapModal();
-  }
-});
-
-</script>
+<script src="https://www.youtube.com/iframe_api"></script>
 <script>
 // ---- Feed pool ----
 // ytc = YouTube permanent channel embed (always resolves to current live, never stale)
@@ -7459,7 +6921,7 @@ setInterval(() => maybeRefresh(false), 6 * 3600 * 1000);
   if (last) rline("last catalog refresh: " + new Date(last).toLocaleString());
 })();
 
-// ================= Interactive Radar Map =================
+// ================= Interactive Tactical Radar Map =================
 let mapInstance = null;
 let mapMarkersCluster = null;
 let mapInitialized = false;
@@ -7474,21 +6936,21 @@ function showMapNotice(msg) {
   n.textContent = msg;
   n.style.display = "block";
   clearTimeout(n._timer);
-  n._timer = setTimeout(() => { n.style.display = "none"; }, 2500);
+  n._timer = setTimeout(() => { n.style.display = "none"; }, 3000);
 }
 
 window.tuneFromMap = function(slot, poolIdx) {
   const feed = POOL[poolIdx];
   if (!feed) return;
   mount(slot, feed);
-  showMapNotice(`TUNE CONFIRMED ▸ CAM 0${slot + 1} TUNED TO: ${feed.loc}`);
+  showMapNotice(`TUNED ▸ CAM 0${slot + 1} TO: ${feed.loc}`);
 };
 
 function initMap() {
   if (mapInitialized) return;
   mapInitialized = true;
 
-  // Center US / Atlantic view
+  // Center US / World view
   mapInstance = L.map("camMap", {
     center: [38.5, -95.0],
     zoom: 4,
@@ -7509,11 +6971,11 @@ function initMap() {
     maxClusterRadius: 45,
     spiderfyOnMaxZoom: true,
     showCoverageOnHover: false,
-    chunkedLoading: true,
-    chunkProgress: null
+    chunkedLoading: true
   });
 
-  document.getElementById("mapCamCount").textContent = `${POOL.length.toLocaleString()} CAMERAS ONLINE`;
+  const countEl = document.getElementById("mapCamCount");
+  if (countEl) countEl.textContent = `${POOL.length.toLocaleString()} CAMERAS ONLINE`;
 
   // Add camera markers
   for (let i = 0; i < POOL.length; i++) {
@@ -7542,7 +7004,7 @@ function initMap() {
         </div>
       </div>
     `;
-    marker.bindPopup(popupHtml, { maxWidth: 300 });
+    marker.bindPopup(popupHtml, { maxWidth: 320 });
     mapMarkersCluster.addLayer(marker);
   }
 
@@ -7555,10 +7017,10 @@ function initMap() {
       if (e.key === "Enter") {
         const query = sInput.value.trim().toUpperCase();
         if (!query) return;
-        const matchIdx = POOL.findIndex(p => p.loc.toUpperCase().includes(query) || (p.st && p.st.toUpperCase().includes(query)) || (p.co && p.co.toUpperCase().includes(query)));
+        const matchIdx = POOL.findIndex(p => (p.loc && p.loc.toUpperCase().includes(query)) || (p.st && p.st.toUpperCase().includes(query)) || (p.co && p.co.toUpperCase().includes(query)));
         if (matchIdx !== -1) {
           const match = POOL[matchIdx];
-          mapInstance.setView([match.lat, match.lon], 11, { animate: true });
+          mapInstance.setView([match.lat, match.lon], 12, { animate: true });
           showMapNotice(`LOCATED: ${match.loc}`);
         } else {
           showMapNotice(`NO CAMERAS MATCHING: "${query}"`);
@@ -7573,7 +7035,11 @@ function openMapModal() {
   if (!m) return;
   m.classList.remove("hidden");
   initMap();
-  setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 150);
+  setTimeout(() => {
+    if (mapInstance) mapInstance.invalidateSize();
+    const sInput = document.getElementById("mapSearch");
+    if (sInput) sInput.focus();
+  }, 180);
 }
 
 function closeMapModal() {
@@ -7581,9 +7047,17 @@ function closeMapModal() {
   if (m) m.classList.add("hidden");
 }
 
-document.getElementById("mapBtn").onclick = openMapModal;
-document.getElementById("closeMap").onclick = closeMapModal;
+// Bind button clicks
+const mapBtn = document.getElementById("mapBtn");
+if (mapBtn) mapBtn.onclick = openMapModal;
 
+const filterMapBtn = document.getElementById("filterMapBtn");
+if (filterMapBtn) filterMapBtn.onclick = openMapModal;
+
+const closeMapBtn = document.getElementById("closeMap");
+if (closeMapBtn) closeMapBtn.onclick = closeMapModal;
+
+// Keyboard shortcut (M to toggle, Esc to close)
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") closeMapModal();
   if ((e.key === "m" || e.key === "M") && document.activeElement !== document.getElementById("mapSearch")) {
@@ -7602,7 +7076,7 @@ document.addEventListener("keydown", e => {
       <small id="mapCamCount">6,166 CAMERAS ONLINE</small>
     </div>
     <div class="map-controls">
-      <input type="text" id="mapSearch" placeholder="SEARCH CITIES / HIGHWAYS / REGIONS..." />
+      <input type="text" id="mapSearch" placeholder="SEARCH CITIES / HIGHWAYS / REGIONS (Press Enter)..." />
       <button id="closeMap" class="secondary">✕ CLOSE (ESC)</button>
     </div>
   </div>
