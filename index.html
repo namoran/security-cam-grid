@@ -272,12 +272,13 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
   .tuning {
     position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 8px;
+    align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 20px;
     background: #000 url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     color: var(--theme-color); letter-spacing: 3px; font-size: 15px;
-    animation: staticflash .4s steps(2) infinite;
+    animation: staticflash .4s steps(2) infinite; pointer-events: auto;
   }
-  .tuning small { color: #7a8a7a; letter-spacing: 1px; font-size: 11px; }
+  .tuning small { color: #8ba58b; letter-spacing: 1px; font-size: 11px; max-width: 85%; line-height: 1.5; }
+  .tuning a, .tuning span { pointer-events: auto; }
   .tuning.hidden { display: none; }
   @keyframes staticflash { 50% { opacity: .85; } }
 
@@ -767,9 +768,9 @@
 // yt  = YouTube video ID, freshly verified live 2026-09-07 (auto-skipped on error/rotation)
 // hls = NJTA direct HLS, CORS-enabled, verified HTTP 200 (auto-skipped on fatal error)
 const POOL = [
-  {kind: "ytc", ch: "UCQ2mmGKtrBp6rL8tSMJCCwA", loc: "DOTONBORI, OSAKA JP", tag: "YT LIVE", ty: "URBAN", ct: "Asia", co: "Japan", st: "Unknown", lat: 34.6979, lon: 135.4881},
-  {kind: "ytc", ch: "UCetYFjkhf7S7LwiuJxeC28g", loc: "ISS ORBITAL - EARTH VIEW", tag: "YT LIVE", ty: "NATURE", ct: "Unknown", co: "Unknown", st: "Unknown", lat: 39.5, lon: -98.35},
-  {kind: "ytc", ch: "UCaaSp7JYkACHR-Sr-p3OHeQ", loc: "RAINBOW BRIDGE, TOKYO", tag: "YT LIVE", ty: "URBAN", ct: "Asia", co: "Japan", st: "Unknown", lat: 35.6695, lon: 139.642},
+  {kind: "yt", yt: "e3cn8nzj42I", loc: "DOTONBORI, OSAKA JP", tag: "YT LIVE", ty: "URBAN", ct: "Asia", co: "Japan", st: "Osaka", lat: 34.6979, lon: 135.4881},
+  {kind: "yt", yt: "I3sa2kiEpkA", loc: "ISS ORBITAL - AURORA & EARTH VIEW", tag: "ORBITAL CAM", ty: "NATURE", ct: "Space", co: "Low Earth Orbit", st: "ISS", lat: 0.0, lon: 0.0},
+  {kind: "yt", yt: "GJhnjzX5xYI", loc: "RAINBOW BRIDGE & TOKYO BAY", tag: "YT LIVE", ty: "URBAN", ct: "Asia", co: "Japan", st: "Tokyo", lat: 35.6695, lon: 139.642},
   {kind: "yt", yt: "JQ_jwk_7OVE", loc: "TIMES SQUARE NORTH (47TH & BROADWAY), NYC", tag: "YT LIVE", ty: "URBAN", ct: "North America", co: "United States", st: "New York", lat: 40.7589, lon: -73.9851},
   {kind: "yt", yt: "kUfuwa8mDrA", loc: "SKYLINE SPAIN COMPILATION", tag: "YT LIVE", ty: "URBAN", ct: "Europe", co: "Spain", st: "Unknown", lat: 40.5814, lon: -3.8731},
   {kind: "hls", src: "https://wowza.telpin.com.ar:1935/camara-muelle/muelle.stream_720p/playlist.m3u8", loc: "PINAMAR PIER, AR", tag: "COASTAL CAM", ty: "BEACH", ct: "South America", co: "Argentina", st: "Unknown", lat: -37.1077, lon: -56.8523},
@@ -7806,11 +7807,8 @@ function mount(slot, feed) {
     <div class="noise"></div>
     ${feed.kind === "hls"
       ? `<video id="${holderId}" muted playsinline autoplay></video>`
-      : feed.kind === "ytc"
-        ? `<iframe id="${holderId}" src="${ytSrc(feed)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="${escapeHtml(feed.loc)}" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
-           <div class="click-catcher" id="catcher-${slot}" title="Click for audio & source uplink"></div>`
-        : `<div id="${holderId}" style="position:absolute;inset:0"></div>
-           <div class="click-catcher" id="catcher-${slot}" title="Click for audio & source uplink"></div>`}
+      : `<div id="${holderId}" style="position:absolute;inset:0"></div>`}
+    <div class="click-catcher" id="catcher-${slot}" title="Click for audio & source uplink"></div>
     <div class="tactical-corners"></div>
     <div class="corner-tr"></div>
     <div class="corner-bl"></div>
@@ -7855,63 +7853,114 @@ function mount(slot, feed) {
     e.stopPropagation();
     selectAudio(slot);
     showSourceHud(slot);
+    try {
+      if (players[slot] && players[slot].playVideo) players[slot].playVideo();
+      const vid = document.querySelector(`#cam${slot} video`);
+      if (vid && vid.paused) vid.play().catch(() => {});
+    } catch (_) {}
   };
   updateAudioBadges();
 
-  const ok = () => { autoFails[slot] = 0; const t = document.getElementById(`tuning-${slot}`); if (t) t.classList.add("hidden"); };
+  const ok = () => {
+    autoFails[slot] = 0;
+    const t = document.getElementById(`tuning-${slot}`);
+    if (t) t.classList.add("hidden");
+  };
+
   const fail = (why) => {
     const t = document.getElementById(`tuning-${slot}`);
+    const srcUrl = getFeedSourceUrl(feed);
+    const srcLabel = getFeedSourceLabel(feed);
     if (manualPin[slot]) {
       if (t) {
         t.classList.remove("hidden");
-        t.innerHTML = `SIGNAL LOST<small>${why} — manual selection preserved (click ⚄ dice to reroll)</small>`;
+        t.innerHTML = `SIGNAL LOST // NO CARRIER<small>${why}<br/><a href="${srcUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--theme-color);text-decoration:underline;font-weight:bold;margin-top:6px;display:inline-block;">🔗 OPEN SOURCE STREAM (${escapeHtml(srcLabel)}) ↗</a> &nbsp;•&nbsp; <span onclick="rerollOne(${slot})" style="color:#ffffff;text-decoration:underline;cursor:pointer;font-weight:bold;">⚄ REROLL CAM</span></small>`;
       }
       return;
     }
     markDead(feed);
     autoFails[slot]++;
     if (autoFails[slot] > 4) {
-      if (t) { t.classList.remove("hidden"); t.innerHTML = `SIGNAL LOST<small>${why} — gave up auto-tuning, hit ⚄ dice</small>`; }
+      if (t) {
+        t.classList.remove("hidden");
+        t.innerHTML = `SIGNAL LOST<small>${why} — gave up auto-tuning.<br/><a href="${srcUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--theme-color);text-decoration:underline;font-weight:bold;margin-top:6px;display:inline-block;">🔗 OPEN SOURCE STREAM ↗</a> &nbsp;•&nbsp; <span onclick="rerollOne(${slot})" style="color:#ffffff;text-decoration:underline;cursor:pointer;">⚄ REROLL</span></small>`;
+      }
       return;
     }
-    if (t) { t.classList.remove("hidden"); t.innerHTML = `SIGNAL LOST — RETUNING…<small>${why}</small>`; }
+    if (t) {
+      t.classList.remove("hidden");
+      t.innerHTML = `SIGNAL LOST — RETUNING…<small>${why}</small>`;
+    }
     timers[slot] = setTimeout(() => rerollOne(slot, true), 1500);
   };
 
+  // 12-second carrier connection timeout
   timers[slot] = setTimeout(() => {
-    const modal = document.getElementById("mapModal");
-    const isMapOpen = modal && !modal.classList.contains("hidden");
-    if (isMapOpen || manualPin[slot]) return;
-    if (!document.getElementById(`tuning-${slot}`)?.classList.contains("hidden")) fail("timeout");
-  }, 20000);
+    const t = document.getElementById(`tuning-${slot}`);
+    if (t && !t.classList.contains("hidden")) {
+      fail("carrier connection timeout (12s)");
+    }
+  }, 12000);
 
   if (feed.kind === "hls") {
     const video = document.getElementById(holderId);
     video.muted = true;
     video.style.cursor = "pointer";
-    video.onclick = e => { e.preventDefault(); e.stopPropagation(); selectAudio(slot); showSourceHud(slot); };
+    video.onclick = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      selectAudio(slot);
+      showSourceHud(slot);
+    };
+
+    const onStreamActive = () => {
+      ok();
+      probeHlsAudio(slot, video, hlsObjs[slot]);
+      video.removeEventListener("playing", onStreamActive);
+      video.removeEventListener("timeupdate", onStreamActive);
+      video.removeEventListener("loadeddata", onStreamActive);
+    };
+    video.addEventListener("playing", onStreamActive);
+    video.addEventListener("timeupdate", onStreamActive);
+    video.addEventListener("loadeddata", onStreamActive);
+
     if (window.Hls && Hls.isSupported()) {
-      const h = new Hls({ maxBufferLength: 20 });
+      const h = new Hls({
+        maxBufferLength: 20,
+        enableWorker: true,
+        lowLatencyMode: true,
+      });
       hlsObjs[slot] = h;
-      h.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-      h.on(Hls.Events.ERROR, (_, data) => { if (data.fatal) fail("hls error"); });
+      h.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {});
+      });
+      h.on(Hls.Events.FRAG_LOADED, () => {
+        if (video.currentTime > 0 || video.readyState >= 2) ok();
+      });
+      h.on(Hls.Events.ERROR, (_, data) => {
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              h.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              h.recoverMediaError();
+              break;
+            default:
+              fail("hls stream error (" + (data.details || "network") + ")");
+              break;
+          }
+        }
+      });
       h.loadSource(feed.src);
       h.attachMedia(video);
-      video.addEventListener("playing", function onPlay() {
-        ok();
-        probeHlsAudio(slot, video, h);
-        video.removeEventListener("playing", onPlay);
-      });
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = feed.src;
       video.addEventListener("loadedmetadata", () => video.play().catch(() => {}));
-      video.addEventListener("playing", function onPlay() {
-        ok();
-        probeHlsAudio(slot, video, null);
-        video.removeEventListener("playing", onPlay);
-      });
-      video.addEventListener("error", () => fail("hls error"));
-    } else fail("hls unsupported");
+      video.addEventListener("error", () => fail("hls native playback error"));
+    } else {
+      fail("hls unsupported");
+    }
   } else {
     const events = {
       onReady: e => {
@@ -7919,23 +7968,29 @@ function mount(slot, feed) {
           if (audibleSlot === slot) { e.target.unMute(); e.target.setVolume(100); }
           else e.target.mute();
           e.target.playVideo();
+          setTimeout(() => {
+            try {
+              const s = e.target.getPlayerState();
+              if (s === 1 || s === 3) ok();
+            } catch (_) {}
+          }, 800);
         } catch (_) {}
       },
-      onStateChange: e => { if (e.data === YT.PlayerState.PLAYING) ok(); },
-      onError: e => fail("unavailable (code " + e.data + ")"),
+      onStateChange: e => {
+        if (e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.BUFFERING) {
+          ok();
+        }
+      },
+      onError: e => fail("youtube embed error (code " + e.data + ")"),
     };
     const create = () => {
       if (!window.YT || !YT.Player) { fail("youtube api blocked"); return; }
-      if (feed.kind === "ytc") {
-        players[slot] = new YT.Player(holderId, { width: "100%", height: "100%", events });
-      } else {
-        players[slot] = new YT.Player(holderId, {
-          width: "100%", height: "100%",
-          playerVars: { autoplay: 1, mute: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, disablekb: 1 },
-          videoId: feed.yt,
-          events,
-        });
-      }
+      players[slot] = new YT.Player(holderId, {
+        width: "100%", height: "100%",
+        playerVars: { autoplay: 1, mute: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, disablekb: 1 },
+        videoId: feed.yt,
+        events,
+      });
     };
     if (ytReady) create(); else pendingYT.push(create);
   }
@@ -9007,6 +9062,13 @@ function closeMapModal() {
   const m = document.getElementById("mapModal");
   if (m) m.classList.add("hidden");
   stopRadarCanvas();
+  for (let s = 0; s < 4; s++) {
+    const v = document.querySelector(`#cam${s} video`);
+    if (v && v.paused) v.play().catch(() => {});
+    if (players[s] && players[s].playVideo) {
+      try { players[s].playVideo(); } catch (_) {}
+    }
+  }
   for (let s = 0; s < 4; s++) {
     const v = document.querySelector(`#cam${s} video`);
     if (v && v.paused) v.play().catch(() => {});
